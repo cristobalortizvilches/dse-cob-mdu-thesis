@@ -1,11 +1,9 @@
 ---
-title: "El efecto de la Desigualdad Socio-espacial en el Sentido de Pertenencia al Barrio: el caso del Area Metropolitana de Santiago de Chile"
-author: "Cristóbal Ortiz y Valentina Vásquez"
-date: "11-08-2020"
+title: "Desigualdad socioespacial y cohesión barrial en tiempos convulsos: el caso de Santiago de Chile entre 2018 y 2022"
+author: "Cristóbal Ortiz Vilches"
+date: "26-05-2023"
 output: html_document
 ---
-Este proyecto de investigación es un intento de explicar sistemáticamente el efecto de la desigualdad socioespacial sobre el sentido de pertenencia a nivel de barrio. Para ello, se realiza un análisis multinivel con datos de ELSOC y otras fuentes.
-
-This research project is an attempt to systematically explain the effect of socio-spatial inequality on the sense of belonging at the neighborhood level. For this purpose, a multilevel analysis is performed with data from ELSOC and other sources.
+Este proyecto de investigación es un intento de explicar sistemáticamente la relación entre la desigualdad socioespacial y las formas de cohesión barrial en el Gran Santiago. Para ello, se realiza un análisis de ecuaciones estructurales multinivel.
 
 ![](https://raw.githubusercontent.com/cristobalortizvilches/dse_spb/master/1_input/images/urban-cranes.png)
