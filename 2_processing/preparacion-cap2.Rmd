@@ -1,0 +1,137 @@
+---
+title: "Código preparación 2.0 c/Imputación de NA"
+author: "Cristóbal Ortiz"
+date: "29-04-2021"
+output: html_document
+---
+
+```{r ajustes-markdown,include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE, cache = TRUE)
+knitr::opts_knit$set(root.dir = "../")
+options(scipen=999)
+options(knitr.kable.NA = '')
+```
+
+```{r load-librerias}
+library(tidyverse)
+library(openxlsx)
+library(sjmisc)
+library(sjlabelled)
+library(scales)
+```
+
+```{r load-dataset}
+getwd()
+remove(list = ls())
+load("../1_input/data/original/elsoc-w01-dv/ELSOC_W01_V4.01_R.RData") #base de datos ola 1
+cit_2016 <- read.xlsx("../1_input/data/original/cit-w01-dv/ELSOC_CIT_Dataset_2016.xlsx")
+#cit_2016 <- read.table("../1_input/data/original/cit-w01-dv/ELSOC_CIT_Dataset_2016.tab", header = T)
+#elsoc_cit_2016 <- merge(elsoc_2016, cit_2016, by="idencuesta", all.x = TRUE, all.y = TRUE)
+elsoc_cit_2016 <- dplyr::left_join(x = elsoc_2016, y = cit_2016, by = "idencuesta")
+```
+
+```{r limpieza-dataset}
+#selección de variables
+elsoc_gs <- elsoc_cit_2016 %>% 
+  filter(estrato == 1) %>% 
+  dplyr::select(idencuesta, #id individual
+                estrato, comuna.x, comuna_cod, manzana, zona, distrito, #id geográficos
+                t01:t11_04, m34_03, #variables modulo territorio
+                nived_zon, sded_zon, dens_zon, accs_zon, #variables cit zona
+                nived_dto, sded_dto, dens_dto, accs_dto, #variables cit distrito
+                nived_com) #variables cit comuna
+
+#convertimos no sabe/no responde/no disponible/sin dato/no aplica a NA
+elsoc_gs[elsoc_gs == -888 | elsoc_gs == -999 | elsoc_gs == 994 | elsoc_gs == 995 | elsoc_gs == 996] <- NA
+```
+
+```{r manipulacion-variables}
+elsoc_gs <- elsoc_gs %>% 
+  remove_all_labels() %>%
+  #-----Recode Y: Apego al barrio
+  mutate(apbi = (t02_01 + t02_02 + t02_03 + t02_04)/4) %>% 
+  mutate(apbr = factor(case_when(apbi < 2 ~ 1, apbi < 3 ~ 2,
+                                 apbi < 4 ~ 3, apbi <= 5 ~ 4),
+                           labels = c('Muy Bajo', 'Bajo', 'Medio', 'Alto')),
+  #-----Recode Xi: Experiencia de habitar el barrio
+         soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
+         cnfi = t01,
+         segu = factor(car::recode(t10, "1:2=1;3=2;4:5=3"),
+                           labels = c("Baja",
+                                      "Media",
+                                      "Alta")),
+         acci = (t06_02 + t06_05 + t06_06 + t06_07)/4,
+         geni = (t04_02 + t04_03 + t04_04)/3,
+         desi = (car::recode(t04_06, "1=5;2=4;3=3;4=2;5=1") +
+                 car::recode(t04_07, "1=5;2=4;3=3;4=2;5=1"))/2,
+         repb = factor(car::recode(t08, "1:2=1;3=2;4:5=3"),
+                             labels = c("Negativa",
+                                        "Neutra", 
+                                        "Positiva")),
+  #-----Recode Controles: Variables socio-demográficas
+         time = m34_03) %>%
+  #-----Recode Zi escala Zona
+  group_by(zona) %>% 
+  mutate(repb_zon = mean(t08, na.rm = T),
+         apbi_zon = mean(apbi, na.rm = T)) %>% 
+  ungroup() %>% 
+  mutate(sded_zon = rescale(sded_zon, to = c(1,5)),
+         dens_zon = rescale(dens_zon, to = c(1,5)), 
+         accs_zon = rescale(accs_zon, to = c(1,5))) %>% 
+  #-----Recode Zi escala distrito
+  group_by(distrito) %>% 
+  mutate(repb_dto = mean(t08, na.rm = T),
+         apbi_dto = mean(apbi, na.rm = T)) %>%
+  ungroup() %>% 
+  mutate(sded_dto = rescale(sded_dto, to = c(1,5)),
+         dens_dto = rescale(dens_dto, to = c(1,5)), 
+         accs_dto = rescale(accs_dto, to = c(1,5))) %>% 
+  #-----Etiqueta variables 
+  var_labels(
+    #Etiqueta Y
+    apbi = "Apego barrial",
+    apbr = "Apego Barrial",
+    apbi_zon = 'Apego barrial zona',
+    apbi_dto = 'Apego barrial distrito',
+    #Etiquetas Xi
+    soci = "Sociabilidad barrial", 
+    cnfi = "Confianza en vecinos",
+    segu = 'Seguridad barrial',
+    acci = 'Accesibilidad barrial',
+    geni = 'Encarecimiento barrial',
+    desi = 'Percepción vecinal',
+    repb = 'Reputación barrial',
+    time = 'Tiempo de residencia',
+    #Etiqueta Zi escala zona
+    sded_zon = 'Heterogeneidad zona',
+    accs_zon = 'Accesibilidad zona',
+    repb_zon = 'Reputación zona',
+    dens_zon = 'Densidad zona',
+    #Etiqueta Zi escala distrito
+    sded_dto = 'Heterogeneidad distrito',
+    accs_dto = 'Accesibilidad distrito',
+    repb_dto = 'Reputación distrito',
+    dens_dto = 'Densidad distrito', 
+    #Etiqueta variable comunal
+    nived_com = 'Escolaridad comuna') %>% 
+  filter(comuna.x != "Vitacura") #filtramos comuna con N muy bajo Vitacura N=1
+
+elsoc_gs$time[elsoc_gs$time == 80] <- 75 #imputamos valor sospechoso 
+elsoc_gs$time[elsoc_gs$time == 0] <- 1 #imputamos valor para redondear
+```
+
+```{r save-dataset}
+elsoc_entorno <- elsoc_gs %>% 
+  select(idencuesta, estrato, comuna.x, comuna_cod, manzana, zona, distrito, #ids
+         apbi, apbr, soci, cnfi, segu, acci, geni, desi, repb, time, #variables individuales
+         sded_zon, accs_zon, repb_zon, dens_zon, #variables territoriales zona
+         sded_dto, accs_dto, repb_dto, dens_dto,  #variables territoriales distrito
+         nived_com, apbi_zon, apbi_dto) #variables territoriales comuna
+
+save(elsoc_entorno, file = "../1_input/data/procesada/elsoc_entorno.RData")
+```
+
+```{r}
+sessionInfo()
+```
+

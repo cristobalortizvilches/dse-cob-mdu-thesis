@@ -1,0 +1,4 @@
+"";"npar";"AIC";"BIC";"logLik";"deviance";"Chisq";"Df";"Pr(>Chisq)"
+"lmer(apbi ~ 1 + (1 | zona), data = elsoc_ent_na, REML = FALSE)";3;1588,09668721161;1601,38584564573;-791,048343605807;1582,09668721161;NA;NA;NA
+"lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + (1 | zona), data = elsoc_ent_na, REML = FALSE)";12;1237,36432834409;1290,52096208056;-606,682164172044;1213,36432834409;368,732358867526;9;6,35775382853742e-74
+"lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + dens_zon + sded_zon + accs_zon + repb_zon + (1 | zona), data = elsoc_ent_na, REML = FALSE)";16;1228,81123919722;1299,68675084584;-598,405619598609;1196,81123919722;16,5530891468698;4;0,00236009018196531

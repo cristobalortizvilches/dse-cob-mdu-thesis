@@ -1,0 +1,376 @@
+---
+title: "Código de Análisis de Datos"
+output: html_document
+---
+
+```{r Ajustes de Markdown,include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE, cache = TRUE)
+knitr::opts_knit$set(root.dir = "../")
+options(scipen=999)
+options(knitr.kable.NA = '')
+```
+
+```{r Cargar paquetes, include=FALSE}
+library(tidyverse)
+library(lme4)
+library(texreg)
+library(vtable)
+library(psych)
+library(sjPlot)
+library(cowplot)
+```
+
+```{r Cargar base de datos procesada, include=FALSE}
+getwd()
+rm(list=ls())
+load("../1_input/data/procesada/elsoc_entorno.RData")
+names(elsoc_entorno)
+#View(elsoc_entorno)
+```
+
+```{r descriptivos}
+# tabla descriptivos
+load("../1_input/data/procesada/elsoc.RData")
+# vector Cronbach
+alfa_apbi <- alpha(dplyr::select(elsoc_gs, t02_01, t02_02, t02_03, t02_04)) 
+alfa_soci <- alpha(dplyr::select(elsoc_gs, t03_01, t03_02, t03_03, t03_04))
+alfa_acci <- alpha(dplyr::select(elsoc_gs, t06_02, t06_05, t06_06, t06_07))
+alfa_geni <- alpha(dplyr::select(elsoc_gs, t04_02, t04_03, t04_04))
+alfa_desi <- alpha(dplyr::select(elsoc_gs, t04_06, t04_07))
+alfa_cron <- c(alfa_apbi[[1]][,1], alfa_soci[[1]][,1], rep("", 5), 
+               alfa_acci[[1]][,1], alfa_geni[[1]][,1], alfa_desi[[1]][,1], rep("", 13)) %>% 
+  as.numeric() %>% 
+  round(digits = 2)
+
+desc_table <- sumtable(elsoc_entorno %>% select(apbi:dens_dto, -apbr), digits = 2, out = "return", labels = TRUE,
+                       summ = c('notNA(x)','mean(x)','sd(x)','min(x)','max(x)'),
+                       summ.names = c('N Válidos','Media/Porcentaje','SD','Mínimo','Máximo')) %>% 
+  mutate("Cronbach" = alfa_cron) #agregamos vector cronbach
+
+desc_table$Cronbach[is.na(desc_table$Cronbach)] <- '' #convertimos los NA en espacios vacíos
+
+remove(elsoc, elsoc_gs, alfa_apbi, alfa_soci, alfa_acci, alfa_geni, alfa_desi, alfa_cron)
+
+write.csv2(desc_table, file = "../3_output/tablas/cap2/1_desc_table.csv") #guardamos
+```
+
+### 1.1 Modelo multinivel para apego barrial agrupando por zona censal
+
+```{r modelos-zon, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+#modelo nulo zona
+mod_0_zon = lmer(apbi ~ 1 + (1 | zona), data = elsoc_entorno)
+#modelo con predictores individuales
+mod_1_zon = lmer(apbi ~ 1 + time + soci + cnfi + segu + acci + geni + repb + desi + (1 | zona), data = elsoc_entorno)
+#modelo con predictores contextuales
+mod_2_zon = lmer(apbi ~ 1 + dens_zon + sded_zon + accs_zon + repb_zon + (1 | zona), data = elsoc_entorno)
+#modelo con predictores individuales y contextuales (multinivel)
+mod_3_zon = lmer(apbi ~ 1 + time + soci + cnfi + segu + acci + geni + repb + desi + 
+                   dens_zon + sded_zon + accs_zon + repb_zon + (1 | zona), data = elsoc_entorno)
+
+#screenreg(list(mod_0_zon,mod_1_zon,mod_2_zon,mod_3_zon))
+```
+
+```{r tabla-modelos-zon,eval=FALSE, include=FALSE, results='asis'}
+#comparación gráfica de modelos
+htmlreg(list(mod_0_zon,mod_1_zon,mod_2_zon,mod_3_zon), file = "../3_output/tablas/cap2/2.1_rifsm_zona.doc",
+        custom.model.names = c("Modelo Nulo","Modelo Individual",
+                           "Modelo Contextual", "Modelo Multinivel"),
+    custom.coef.names = c("Intercepto", "Tiempo residencia",
+                          "Sociabilidad barrial", "Confianza en vecinos","Media","Alta",
+                          "Satisfacción accesibilidad", "Encarecimiento barrial",
+                          "Neutra", "Positiva", "Deseabilidad social",
+                          "Densidad territorial", "Heterogeneidad territorial",
+                          "Accesibilidad territorial", "Reputación territorial"),
+    caption.above = TRUE,
+    digits = 3)
+```
+
+### 1.2 Modelo multinivel para apego barrial agrupando por distrito
+
+```{r modelos-dto, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+#modelo nulo 
+mod_0_dto = lmer(apbi ~ 1 + (1 | distrito), data = elsoc_entorno)
+#modelo con predictores individuales
+mod_1_dto = lmer(apbi ~ 1 + time + soci + cnfi + segu + acci + geni + repb + desi + (1 | distrito), data = elsoc_entorno)
+#modelo con predictores contextuales
+mod_2_dto = lmer(apbi ~ 1 + dens_dto + sded_dto + accs_dto + repb_dto + (1 | distrito), data = elsoc_entorno)
+#modelo con predictores individuales y contextuales (multinivel)
+mod_3_dto = lmer(apbi ~ 1 + time + soci + cnfi + segu + acci + geni + repb + desi + dens_dto + sded_dto + accs_dto + repb_dto + (1 | distrito), data = elsoc_entorno)
+
+#screenreg(list(mod_0_dto,mod_1_dto,mod_2_dto,mod_3_dto))
+```
+
+```{r tabla-modelos,eval=FALSE, include=FALSE, results='asis'}
+#comparación gráfica de modelos
+htmlreg(list(mod_0_dto,mod_1_dto,mod_2_dto,mod_3_dto), file = "../3_output/tablas/cap2/2.2_rifsm_dto.doc",
+        custom.model.names = c("Modelo Nulo","Modelo Individual",
+                           "Modelo Contextual", "Modelo Multinivel"),
+    custom.coef.names = c("Intercepto", "Tiempo residencia",
+                          "Sociabilidad barrial", "Confianza en vecinos","Media","Alta",
+                          "Satisfacción accesibilidad", "Encarecimiento barrial",
+                          "Neutra", "Positiva", "Deseabilidad social",
+                          "Densidad territorial","Heterogeneidad territorial",
+                          "Accesibilidad territorial", "Reputación territorial"),
+    caption.above=TRUE,
+    digits=3)
+```
+
+### *Bondad de Ajuste del Modelo*
+
+#### *Ajuste del modelo por varianzas: $R^2$ de Bryk & Raudenbusch*
+
+```{r ajuste-varianza-zon, include=FALSE}
+# Estadísticos de variación
+varcomp_0 <- as.data.frame(VarCorr(mod_0_zon)) #modelo 0 nulo
+tau00_0 <- varcomp_0[1,4]
+sigma2_0 <- varcomp_0[2,4]
+
+varcomp_1 <- as.data.frame(VarCorr(mod_1_zon)) #modelo 1 individual
+tau00_1 <- varcomp_1[1,4]
+sigma2_1 <- varcomp_1[2,4]
+
+varcomp_2 <- as.data.frame(VarCorr(mod_2_zon)) #modelo 2 contextual
+tau00_2 <- varcomp_2[1,4]
+sigma2_2 <- varcomp_2[2,4]
+
+varcomp_3 <- as.data.frame(VarCorr(mod_3_zon)) #modelo 3 multinivel
+tau00_3 <- varcomp_3[1,4]
+sigma2_3 <- varcomp_3[2,4]
+
+# Ajuste por varianza
+R2_1_L1 <- (sigma2_0-sigma2_1)/sigma2_0 # Modelo 1 
+
+R2_2_L1 <- (sigma2_0-sigma2_2)/sigma2_0 # Modelo 2 
+R2_2_L2 <- (tau00_0-tau00_2)/tau00_0
+
+R2_3_L1 <- (sigma2_0-sigma2_3)/sigma2_0 # Modelo 3 
+R2_3_L2 <- (tau00_0-tau00_3)/tau00_0
+
+ICC_0 <- tau00_0/(tau00_0+sigma2_0) # ICC (para comparación)
+ICC_1 <- tau00_1/(tau00_1+sigma2_1)
+ICC_2 <- tau00_2/(tau00_2+sigma2_2)
+ICC_3 <- tau00_3/(tau00_3+sigma2_3)
+
+comp_var_zon <- data.frame(
+    "Modelo" = c("Modelos Nulo", "Modelo Individual", "Modelo Contextual", "Modelo Multinivel"), 
+    "Sigma2" = c(sigma2_0, sigma2_1, sigma2_2, sigma2_3) %>% round(digits = 3), 
+    "Tau" = c(tau00_0, tau00_1, tau00_2, tau00_3) %>% round(digits = 3),
+    "ICC" = c(ICC_0, ICC_1, ICC_2, ICC_3) %>% round(digits = 3),
+    "R2L1" = c(0, R2_1_L1, R2_2_L1, R2_3_L1) %>% round(digits = 3), 
+    "R2L2" = c(0, 0, R2_2_L2, R2_3_L2) %>% round(digits = 3))
+
+comp_var_zon[comp_var_zon == 0] <- "-"
+
+write.csv2(comp_var_zon,"../3_output/tablas/cap2/3.1_comp_var_zon.csv")
+```
+
+
+```{r ajuste-varianza-dto, include=FALSE}
+# Estadísticos de variación
+varcomp_0 <- as.data.frame(VarCorr(mod_0_dto)) #modelo 0 nulo
+tau00_0 <- varcomp_0[1,4]
+sigma2_0 <- varcomp_0[2,4]
+
+varcomp_1 <- as.data.frame(VarCorr(mod_1_dto)) #modelo 1 individual
+tau00_1 <- varcomp_1[1,4]
+sigma2_1 <- varcomp_1[2,4]
+
+varcomp_2 <- as.data.frame(VarCorr(mod_2_dto)) #modelo 2 contextual
+tau00_2 <- varcomp_2[1,4]
+sigma2_2 <- varcomp_2[2,4]
+
+varcomp_3 <- as.data.frame(VarCorr(mod_3_dto)) #modelo 3 multinivel
+tau00_3 <- varcomp_3[1,4]
+sigma2_3 <- varcomp_3[2,4]
+
+# Ajuste por varianza
+R2_1_L1 <- (sigma2_0-sigma2_1)/sigma2_0 # Modelo 1 
+
+R2_2_L1 <- (sigma2_0-sigma2_2)/sigma2_0 # Modelo 2 
+R2_2_L2 <- (tau00_0-tau00_2)/tau00_0
+
+R2_3_L1 <- (sigma2_0-sigma2_3)/sigma2_0 # Modelo 3 
+R2_3_L2 <- (tau00_0-tau00_3)/tau00_0
+
+ICC_0 <- tau00_0/(tau00_0+sigma2_0) # ICC (para comparación)
+ICC_1 <- tau00_1/(tau00_1+sigma2_1)
+ICC_2 <- tau00_2/(tau00_2+sigma2_2)
+ICC_3 <- tau00_3/(tau00_3+sigma2_3)
+
+comp_var_dto <- data.frame(
+    "Modelo" = c("Modelos Nulo", "Modelo Individual", "Modelo Contextual", "Modelo Multinivel"), 
+    "Sigma2" = c(sigma2_0, sigma2_1, sigma2_2, sigma2_3) %>% round(digits = 3), 
+    "Tau" = c(tau00_0, tau00_1, tau00_2, tau00_3) %>% round(digits = 3),
+    "ICC" = c(ICC_0, ICC_1, ICC_2, ICC_3) %>% round(digits = 3),
+    "R2L1" = c(0, R2_1_L1, R2_2_L1, R2_3_L1) %>% round(digits = 3), 
+    "R2L2" = c(0, 0, R2_2_L2, R2_3_L2) %>% round(digits = 3))
+
+comp_var_dto[comp_var_dto == 0] <- "-"
+
+write.csv2(comp_var_dto,"../3_output/tablas/cap2/3.2_comp_var_dto.csv")
+```
+
+#### *Ajuste comparativo entre modelos: devianza*
+
+##### *Modelo nulo versus modelo individual*
+
+La tabla Anova 1 compara el modelo nulo con el modelo de predictores individuales, los resultados indican que se rechaza la hipótesis nula, por lo tanto existe diferencias significativas entre un modelo y otro; en este caso, el modelo con parámetros individuales ajusta mejor que el modelo nulo, por lo que se justifica el agregar predictores.
+
+```{r Modelo nulo versus modelo 1, echo=FALSE, results='asis'}
+elsoc_ent_na <- na.omit(elsoc_entorno) #eliminamos NA para ajustar con igual N
+
+#devianza zona
+comp_devz <- anova(lmer(apbi ~ 1 + (1 | zona), data = elsoc_ent_na, REML = FALSE),
+                   lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + (1 | zona), data = elsoc_ent_na, REML = FALSE),
+                   lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + dens_zon + sded_zon + accs_zon + repb_zon + (1 | zona), 
+                       data = elsoc_ent_na, REML = FALSE))
+
+write.csv2(comp_devz, "../3_output/tablas/cap2/a_comp_devz_zon.csv")
+
+#devianza distrito
+comp_devd <- anova(lmer(apbi ~ 1 + (1 | distrito), data = elsoc_ent_na, REML = FALSE),
+                   lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + (1 | distrito), data = elsoc_ent_na, REML = FALSE),
+                   lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + dens_dto + sded_dto + accs_dto + repb_dto + (1 | distrito), 
+                       data = elsoc_ent_na, REML = FALSE))
+
+write.csv2(comp_devd, "../3_output/tablas/cap2/a_comp_devd_dto.csv")
+```
+
+Table: Tabla Anova 1
+
+|                   | Df | AIC    | BIC    | logLik  |deviance|  p-value  |
+|-------------------|----|--------|--------|---------|--------|-----------|
+| modelo nulo       | 3  | 1854.6 | 1868.4 | -924.31 | 1848.6 |           |
+| modelo individual | 10 | 1429.2 | 1474.9 | -704.58 | 439.48 |<2.2e-16***|
+| modelo multinivel | 13 | 1232.6 | 1290.8 | -603.30 | 1206.6 |0.001357 **|
+Fuente: elaboración propia en base a los datos de ELSOC (2015)
+
+La tabla Anova 1 compara el modelo individual con el modelo multinivel que incorpora variables tanto individuales como contextuales, los resultados indican que se rechaza la hipótesis nula, por lo tanto existe diferencias significativas entre modelos; en este caso, el modelo multinivel se ajusta mejor que aquel que sólo incorpora predictores de nivel 1, por lo tanto, se justifica incorporar predictores de nivel 2.
+
+
+##### *Modelo nulo con intercepto fijo versus modelo nulo con intercepto aleatorio*
+
+La tabla Anova 2 compara el modelo nulo con intercepto fijo con el modelo nulo con intercepto aleatorio, los resultados indican que se rechaza la hipótesis nula, por lo tanto existe diferencias significativas entre modelos; en este caso, el modelo con intercepto aleatorio ajusta mejor que el modelo con intercepto fijo, por lo que se justifica modelar en multinivel.
+
+```{r Modelo nulo intercepto fijo versus modelo nulo intercepto aleatorio, echo=FALSE, results='asis'}
+comp_devz2 <- anova(nlme::gls(apbi ~ 1, data = elsoc_ent_na, method = "ML"),
+                    nlme::lme(apbi ~ 1, data = elsoc_ent_na, random=~ 1 | zona, method="ML"))
+
+write.csv2(comp_devz2, "../3_output/tablas/cap2/b_comp_devz2_zon.csv")
+
+comp_devz2d <- anova(nlme::gls(apbi ~ 1, data = elsoc_ent_na, method = "ML"),
+                     nlme::lme(apbi ~ 1, data = elsoc_ent_na, random=~ 1 | distrito, method="ML"))
+
+write.csv2(comp_devz2d, "../3_output/tablas/cap2/b_comp_devz2_zon.csv")
+```
+
+Table: Tabla Anova 2
+
+|                                  | Df |  AIC     |   BIC    | logLik  |p-value |
+|----------------------------------|----|----------|----------|---------|--------|
+| modelo nulo intercepto fijo      | 2  | 1636.525 | 1645.482 | -816.26 |        |
+| modelo nulo intercepto aleatorio | 3  | 1611.688 | 1625.124 | -802.84 | <.0001 |
+Fuente: elaboración propia en base a los datos de ELSOC (2015)
+
+
+### *Efectos marginales de los términos de interacción en el modelo*
+
+```{r inter-soci-model, echo=FALSE}
+#para zona
+clim_soci_zon = lmer(apbi ~ 1 + time + soci + cnfi + segu + acci + geni + repb + desi + soci*(dens_zon + sded_zon + repb_zon) + accs_zon + (1 + soci | zona), data = elsoc_entorno, REML = F)
+screenreg(list(clim_soci_zon))
+#para distrito (centrado)
+elsoc_entorno2 <- 
+  elsoc_entorno %>% 
+  mutate(soci2 = scale(soci))
+
+clim_soci_dto = lmer(apbi ~ 1 + time + soci2 + cnfi + segu + acci + geni + repb + desi + soci2*(dens_dto + sded_dto + repb_dto) + accs_dto + (1 + soci2 | distrito), data = elsoc_entorno2, REML = F)
+screenreg(list(clim_soci_dto))
+
+#tabla para zona
+htmlreg(list(clim_soci_zon), file = "../3_output/tablas/cap2/4.1_clim_soci_zon.doc",
+        custom.model.names = c("CLIM"),
+    caption.above=TRUE,
+    digits=3)
+
+#tabla para distrito
+htmlreg(list(clim_soci_dto), file = "../3_output/tablas/cap2/4.2_clim_soci_dto.doc",
+        custom.model.names = c("CLIM"),
+    caption.above=TRUE,
+    digits=3)
+```
+
+```{r inter-soci-plot}
+#gráfico
+me_soci = plot_model(clim_soci_zon, type = "int",
+           title = "",
+           axis.title = c("Sociabilidad barrial","Pertenencia al barrio"),
+           colors = "bw")
+
+save_plot(filename = "../3_output/graficos/cap2/me_soci_dens.png", me_soci[[1]])
+save_plot(filename = "../3_output/graficos/cap2/me_soci_hete.png", me_soci[[2]])
+save_plot(filename = "../3_output/graficos/cap2/me_soci_repb.png", me_soci[[3]])
+
+me_soci
+```
+
+
+```{r inter-desi-model, echo=FALSE}
+#para zona
+clim_desi_zon = lmer(apbi ~ 1 + time + soci + cnfi + segu + acci + geni + repb + desi*(sded_zon + repb_zon) + dens_zon + accs_zon + (1 + desi | zona), data = elsoc_entorno, REML = F)
+screenreg(list(clim_desi_zon))
+
+#para distrito
+elsoc_entorno2 <- 
+  elsoc_entorno %>% 
+  mutate(desi2 = scale(desi))
+
+clim_desi_dto = lmer(apbi ~ 1 + time + soci + cnfi + segu + acci + geni + repb + desi2*(sded_dto + repb_dto) + dens_dto + accs_dto + (1 + desi2 | distrito), data = elsoc_entorno2, REML = F)
+screenreg(list(clim_desi_dto))
+
+#tabla para zona
+htmlreg(list(clim_desi_zon), file = "../3_output/tablas/cap2/5.1_clim_desi_zon.doc",
+        custom.model.names = c("CLIM"),
+        custom.coef.names = c("Intercepto", "Tiempo residencia", "Sociabilidad barrial", 
+                              "Confianza en vecinos", "Media", "Alta", 
+                              "Satisfacción accesibilidad", "Encarecimiento barrial",
+                              "Neutra", "Positiva", "Deseabilidad social",
+                              "Heterogeneidad territorial", "Reputación territorial",
+                              "Densidad territorial", "Accesibilidad territorial", 
+                              "Deseabilidad*Heterogeneidad", "Deseabilidad*Reputación"),
+    caption.above=TRUE,
+    digits=3)
+
+#tabla para distrito
+htmlreg(list(clim_desi_dto), file = "../3_output/tablas/cap2/5.2_clim_desi_dto.doc",
+        custom.model.names = c("CLIM"),
+        custom.coef.names = c("Intercepto", "Tiempo residencia", "Sociabilidad barrial", 
+                              "Confianza en vecinos", "Media", "Alta", 
+                              "Satisfacción accesibilidad", "Encarecimiento barrial",
+                              "Neutra", "Positiva", "Deseabilidad social",
+                              "Heterogeneidad territorial", "Reputación territorial",
+                              "Densidad territorial", "Accesibilidad territorial", 
+                              "Deseabilidad*Heterogeneidad", "Deseabilidad*Reputación"),
+    caption.above=TRUE,
+    digits=3)
+```
+
+```{r inter-desi-plot}
+me_desi = plot_model(clim_desi_zon, type = "int",
+           title = "",
+           axis.title = c("Percepción vecinal","Pertenencia al barrio"),
+           legend.title ="Reputación Territorial",
+           colors = "bw")
+me_desi
+
+save_plot(filename = "../3_output/graficos/cap2/me_desi_hete.png", me_desi[[1]])
+save_plot(filename = "../3_output/graficos/cap2/me_desi_repb.png", me_desi[[2]])
+```
+
+
+
+
+```{r}
+sessionInfo()
+```
+

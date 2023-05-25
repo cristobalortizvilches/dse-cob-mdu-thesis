@@ -1,0 +1,278 @@
+<table class="texreg" style="margin: 10px auto;border-collapse: collapse;border-spacing: 0px;color: #000000;border-top: 2px solid #000000;">
+<caption>Statistical models</caption>
+<thead>
+<tr>
+<th style="padding-left: 5px;padding-right: 5px;">&nbsp;</th>
+<th style="padding-left: 5px;padding-right: 5px;">Modelo Nulo</th>
+<th style="padding-left: 5px;padding-right: 5px;">Modelo Individual</th>
+<th style="padding-left: 5px;padding-right: 5px;">Modelo Contextual</th>
+<th style="padding-left: 5px;padding-right: 5px;">Modelo Multinivel</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-top: 1px solid #000000;">
+<td style="padding-left: 5px;padding-right: 5px;">Intercepto</td>
+<td style="padding-left: 5px;padding-right: 5px;">3.518<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">-0.105</td>
+<td style="padding-left: 5px;padding-right: 5px;">2.322<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">0.093</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.040)</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.216)</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.332)</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.316)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Tiempo residencia</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.009<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.008<sup>***</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.002)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.002)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Sociabilidad barrial</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.369<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.369<sup>***</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.040)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.040)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Confianza en vecinos</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.105<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.103<sup>***</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.025)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.026)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Media</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.160<sup>*</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.137</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.075)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.075)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Alta</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.220<sup>**</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.213<sup>**</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.071)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.071)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Satisfacción accesibilidad</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.236<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.245<sup>***</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.042)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.043)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Encarecimiento barrial</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.106<sup>*</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.093<sup>*</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.041)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.042)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Neutra</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.193<sup>*</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.174<sup>*</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.077)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.084)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Positiva</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.302<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.275<sup>**</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.068)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.091)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Deseabilidad social</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.088<sup>**</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.080<sup>**</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.028)</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.028)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Densidad territorial</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">-0.123<sup>**</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">-0.084<sup>*</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.043)</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.033)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Heterogeneidad territorial</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.066</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.027</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.053)</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.043)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Accesibilidad territorial</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.152<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">0.007</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.043)</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.035)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Reputación territorial</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.245<sup>***</sup></td>
+<td style="padding-left: 5px;padding-right: 5px;">-0.004</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.047)</td>
+<td style="padding-left: 5px;padding-right: 5px;">(0.051)</td>
+</tr>
+<tr style="border-top: 1px solid #000000;">
+<td style="padding-left: 5px;padding-right: 5px;">AIC</td>
+<td style="padding-left: 5px;padding-right: 5px;">1843.113</td>
+<td style="padding-left: 5px;padding-right: 5px;">1267.670</td>
+<td style="padding-left: 5px;padding-right: 5px;">1793.973</td>
+<td style="padding-left: 5px;padding-right: 5px;">1279.897</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">BIC</td>
+<td style="padding-left: 5px;padding-right: 5px;">1856.826</td>
+<td style="padding-left: 5px;padding-right: 5px;">1325.319</td>
+<td style="padding-left: 5px;padding-right: 5px;">1825.940</td>
+<td style="padding-left: 5px;padding-right: 5px;">1355.202</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Log Likelihood</td>
+<td style="padding-left: 5px;padding-right: 5px;">-918.557</td>
+<td style="padding-left: 5px;padding-right: 5px;">-620.835</td>
+<td style="padding-left: 5px;padding-right: 5px;">-889.987</td>
+<td style="padding-left: 5px;padding-right: 5px;">-622.948</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Num. obs.</td>
+<td style="padding-left: 5px;padding-right: 5px;">714</td>
+<td style="padding-left: 5px;padding-right: 5px;">623</td>
+<td style="padding-left: 5px;padding-right: 5px;">711</td>
+<td style="padding-left: 5px;padding-right: 5px;">620</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Num. groups: zona</td>
+<td style="padding-left: 5px;padding-right: 5px;">185</td>
+<td style="padding-left: 5px;padding-right: 5px;">181</td>
+<td style="padding-left: 5px;padding-right: 5px;">184</td>
+<td style="padding-left: 5px;padding-right: 5px;">180</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Var: zona (Intercept)</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.110</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.010</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.022</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.005</td>
+</tr>
+<tr style="border-bottom: 2px solid #000000;">
+<td style="padding-left: 5px;padding-right: 5px;">Var: Residual</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.675</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.390</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.678</td>
+<td style="padding-left: 5px;padding-right: 5px;">0.392</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="font-size: 0.8em;" colspan="5"><sup>***</sup>p &lt; 0.001; <sup>**</sup>p &lt; 0.01; <sup>*</sup>p &lt; 0.05</td>
+</tr>
+</tfoot>
+</table>
