@@ -1,0 +1,9 @@
+---
+title: "Desigualdad socioespacial y cohesión barrial en tiempos convulsos: el caso de Santiago de Chile entre 2018 y 2022"
+author: "Cristóbal Ortiz Vilches"
+date: "26-05-2023"
+output: html_document
+---
+Este proyecto de investigación es un intento de explicar sistemáticamente la relación entre la desigualdad socioespacial y las formas de cohesión barrial en el Gran Santiago. Para ello, se realiza un análisis de ecuaciones estructurales multinivel con datos longitudinales de ELSOC.
+
+![](https://raw.githubusercontent.com/cristobalortizvilches/dse_spb/master/1_input/images/urban-cranes.png)

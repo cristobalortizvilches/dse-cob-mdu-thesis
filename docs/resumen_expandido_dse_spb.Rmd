@@ -1,0 +1,61 @@
+---
+title: "El efecto de la Desigualdad Socio-espacial sobre el Sentido de Pertenencia a Escala Barrial: el caso del Área Metropolitana de Santiago de Chile"
+author:
+   - Cristóbal Ortiz^[Estudiante de sociología Universidad de Chile - cristobal.ortiz.v@ug.uchile.cl]
+output:
+  pdf_document: default
+documentclass: article
+fontsize: 12pt
+linkcolor: blue
+bibliography:
+  - '../1_input/bib/dse_spb.bib'
+csl: '../1_input/bib/apa.csl'
+link-citations: yes
+---
+<div style="text-align: justify">
+# Resumen expandido
+
+El desarrollo urbano del Área Metropolitana de Santiago (AMS) ha sido moldeado por el mercado inmobiliario y el rol subsidiario del Estado, lo cual tiene por consecuencias una alta segregación residencial [@pnud_desiguales_2017; @rasse_segregacion_2016], que resulta acentuada y perjudicial en conjuntos de vivienda social [@sabatini_segregacion_2002], y una marcada distribución geográfica de la riqueza [@mendez_ciudad_2017], lo que contribuye a diversas manifestaciones de conflicto urbano. En el AMS, el conflicto adquiere la forma de desigualdades socio-espaciales que afectan la cohesión barrial [@mendez_ciudad_2017], dificultando la acción colectiva [@ozler_concertacion_2011], provocando desconfianza entre vecinos [@brain_valenzuela_vivir_2010] e incluso negando la comunidad en barrios de alta segregación de grupos empobrecidos [@rodriguez_con_2015]. La urbanización neoliberal configura dos límites urbanos opuestos: condominios altos y medios en donde la identidad se consagra mediante el mercado, y villas de vivienda social, en donde la identidad social es un proyecto disputado, con un “nosotros” fuertemente debilitado [@marquez_identidad_2003]. 
+ 
+No obstante, otros estudios concluyen surgimiento de cohesión frente a conflictos tales como desplazamiento territorial en barrios de clase media y baja [@angelcos_struggles_2016] y en barrios patrimonializados [@uribe_patrimonializacion_2014], demostrando que la conflictividad urbana no genera mecánicamente falta de cohesión, sino que también la puede desencadenar según la capacidad de acción de los agentes. Lo anterior evidencia el carácter no determinista de la conformación de la conciencia de los habitantes urbanos, ya que la relación entre ciudad -como objeto- y la urbanización -como proceso social- es dialéctica y dinámica [@harvey_espacios_2014].
+ 
+Considerando estos antecedentes, la presente investigación busca contribuir desde un enfoque socio-espacial a la discusión sobre los condicionantes de la cohesión barrial en ciudades neoliberales. Se aborda una dimensión particular de la cohesión: el sentido de pertenencia al barrio, el cual da cuenta del vínculo simbólico y emocional entre la persona y su comunidad barrial [@mendez_neighbourhood_2018]. De esta manera se busca responder ¿en qué medida las características de la estructura socio-urbana del AMS, subdividida en zonas censales, afectan el sentido de pertenencia a escala barrial percibido por habitantes del AMS de Chile? Teniendo como hipótesis que la estructura socio-urbana del AMS, caracterizada por la desigualdad socio-espacial, influye de manera diferenciada en los distintos niveles de sentido de pertenencia al barrio; específicamente, se busca testear 3 grupos de hipótesis derivadas de la literatura:
+ 
+1. Determinantes de nivel individual:
+   + La calidad de las relaciones sociales afecta positivamente el sentido de pertenencia.
+
+   + La conflictividad a nivel micro-social afecta negativamente el sentido de pertenencia.
+ 
+   + La conflictividad a nivel meso-social afecta negativamente el sentido de pertenencia.
+ 
+   + La estigmatización territorial afecta negativamente el sentido de pertenencia.
+ 
+2. Determinantes de nivel contextual:
+   + La segregación residencial en conjuntos habitacionales de alto nivel socioeconómico afecta positivamente el sentido de pertenencia.
+ 
+   + La segregación residencial en conjuntos habitacionales de bajo nivel socioeconómico afecta negativamente el sentido de pertenencia.
+ 
+   + Accesibilidad a servicios públicos y privados afecta positivamente el sentido de pertenencia.
+ 
+   + La densidad poblacional afecta negativamente el sentido de pertenencia.
+ 
+   + La criminalidad afecta negativamente el sentido de pertenencia.
+ 
+3. Interacciones entre nivel individual y contextual
+   + El efecto de la calidad de las relaciones sociales sobre el sentido de pertenencia está mediado por el contexto territorial; en donde el puntaje de violencia tiene un efecto negativo y el acceso a servicios públicos y la reputación barrial tienen un efecto positivo en la relación.
+ 
+   + El efecto de la conflictividad micro-social sobre el sentido de pertenencia está mediado por el contexto territorial, en donde la densidad poblacional y el acceso a servicios públicos tienen un efecto negativo en la relación.
+ 
+   + El efecto de la conflictividad meso-social sobre el sentido de pertenencia está mediado por el contexto territorial, en donde el puntaje de violencia tiene un efecto positivo en la relación.
+ 
+   + El efecto de la estigmatización territorial sobre el sentido de pertenencia está mediado por el contexto territorial, en donde el puntaje de violencia tiene un efecto negativo en la relación.
+ 
+Para testear estas hipótesis realizamos un análisis multinivel, modelando el efecto del contexto territorial del AMS, que en este caso corresponde a indicadores de desigualdad socio-espacial agregados por zona censal, sobre el índice de sentido de pertenencia al barrio percibido por los habitantes del AMS. De este análisis se identifican tanto variables individuales como contextuales que afectan y explican de manera diferenciada el sentido de pertenencia al barrio, todas la cuales se construyen en base a los datos del Estudio Longitudinal Social de Chile [@elsoc_survey_estudio_2020], cuya muestra en la primera ola incluye 2927 casos a nivel nacional, 720 para el AMS y alrededor de 180 zonas censales en su interior.
+ 
+Los resultados indican que, primero, se logra un modelo de nivel individual que explica el sentido de pertenencia (bondad de ajuste del 47%), cuyos principales predictores son la calidad de las relaciones sociales y la satisfacción residencial. Segundo, se demuestra que el contexto sí influye en la cohesión, pues al agrupar por zonas censales, el 17% de la variación del sentido de pertenencia se atribuye a la zona censal, variación que es explicada en un 82% por el modelo multinivel elaborado, en el cual destaca la densidad poblacional, el puntaje de violencia urbana y la accesibilidad a servicios. No se halla un efecto significativo de la segregación residencial sobre el sentido de pertenencia, sin embargo, este resultado será reevaluado con nuevas variables de segregación en futuros informes. Finalmente, la interacción entre niveles tiene dos resultados importantes: el acceso a servicios públicos modera negativamente el efecto de la calidad de las relaciones sociales sobre el sentido de pertenencia, esto es, ante un mal acceso a servicios públicos la calidad de las relaciones se vuelve más importante para explicar sentido de pertenencia; y, el puntaje de violencia modera negativamente el efecto de la reputación barrial sobre el sentido de pertenencia, lo que indica que en zonas afectadas por la violencia, la mala reputación barrial da cuenta de un mayor sentido de pertenencia.
+
+Palabras clave: *sentido de pertenencia, cohesión barrial, desigualdad socio-espacial, conflicto urbano, desarrollo urbano*
+ 
+# Referencias del resumen
+
+<div/>

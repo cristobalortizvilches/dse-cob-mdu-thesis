@@ -1,0 +1,190 @@
+---
+title: "El efecto de la Desigualdad Socio-espacial sobre el Sentido de Pertenencia a Escala Barrial: el caso del Área Metropolitana de Santiago de Chile"
+author: "Cristóbal Ortiz"
+date: "11-07-2020"
+output:
+  html_document:
+    df_print: paged
+    theme: readable
+    toc: yes
+    toc_float: yes
+editor_options:
+  chunk_output_type: inline
+bibliography: ../1_input/bib/dse_spb.bib
+csl: ../1_input/bib/apa.csl
+link-citations: yes
+---
+
+<div style="text-align: justify">
+
+
+# **Abstract**
+
+Esta investigación busca identificar las variables individuales y contextuales que afectan y explican la cohesión barrial percibida en el Gran Santiago. Para ello se utilizan los datos del Estudio Longitudinal Social de Chile [@elsoc_survey_estudio_2020], cuya muestra incluye 2927 casos a nivel nacional y 720 para el Gran Santiago. Se operacionaliza cohesión barrial como variable dependiente, y, como variables independientes de nivel individual, conflicto meso-social, conflicto micro-social, calidad de relaciones sociales en el barrio y reputación barrial. Asimismo, se operacionalizan indicadores territoriales referidos a la desigualdad socio-espacial como variables independientes de nivel contextual, agrupándolos en 184 zonas censales del Gran Santiago. Se elaboran y comparan modelos de regresión lineal múltiple para dar cuenta de las diferentes relaciones en el nivel individual, así como modelos multinivel para incorporar el efecto de las variables de contexto. En primer lugar, se logra hallar un modelo de nivel individual que explica la cohesión barrial, entre los predictores de nivel individual destaca la calidad de las relaciones sociales. En segundo lugar, se constata que el contexto sí influye en la cohesión, pues al agrupar por zonas, el 17% de la variación de la cohesión barrial se atribuye a la zona de residencia, además, el modelo multinivel explica el 82% de esta variación. Entre las variables de contexto que dan cuenta de la variación de la cohesión destaca la densidad poblacional, el puntaje de violencia urbana y el nivel de accesibilidad a servicios públicos. Finalmente, se elaboran siete modelos de interacción entre niveles y se constata la influencia del contexto en la relación de los predictores de nivel individual con la cohesión barrial. Los resultados principales de la interacción apuntan a que el acceso a servicios y equipamiento públicos modera el efecto de la calidad de las relaciones sociales sobre la cohesión barrial y a que el puntaje de violencia modera el efecto de la reputación del barrio sobre la cohesión barrial. 
+
+**Palabras clave: cohesión barrial, conflicto social, relaciones sociales, desigualdad socio-espacial** 
+
+# **I. Introducción**
+
+La población chilena reside mayoritariamente en sectores urbanos [@united_nations_world_2019], dentro de los cuales destaca la zona metropolitana del Gran Santiago, que concentra al 35% de la población, equivalente a 6 millones de habitantes en 37 comunas [@mendez_neighborhoods_2018]. El desarrollo urbano de la metrópoli ha sido fuertemente moldeado por el desenvolvimiento del mercado inmobiliario y por el rol subsidiario del Estado, siendo considerada por algunos enfoques como la ciudad neoliberal por excelencia [@de_mattos_modernizacion_2007].
+
+Como consecuencia, esta ciudad se caracteriza por la segregación socio-espacial [@oecd_it_2015] y una marcada distribución desigual de la riqueza [@mendez_ciudad_2017] que ha propiciado la acumulación progresiva de las desigualdades socio-espaciales [@garreton_city_2017]. Este escenario conlleva a distintas manifestaciones de conflictos urbanos que los sujetos y sus comunidades deben enfrentar en la actualidad [@sur_mapa_2011].
+
+En este contexto, estudios señalan la falta de cohesión en barrios urbanos: Persisten dificultades para la acción colectiva de los sujetos [@ozler_concertacion_2011] y prima la desconfianza entre vecinos [@brain_valenzuela_vivir_2010]. Además, esta falta de cohesión es esperable en mayor medida en los barrios populares de Latinoamérica, en donde se indica una erosión de la calidad de las relaciones sociales a partir de procesos de “guetización”, mientras que en los barrios de élite se percibe el fenómeno contrario con una alta cohesión [@kaztman_calidad_2007; @sabatini_segregacion_2001-1].
+
+Sin embargo, estudios cualitativos de ciudades chilenas concluyen un surgimiento de cohesión frente al desplazamiento territorial en barrios de clase media y baja, producto de procesos de gentrificación [@angelcos_struggles_2016; @canteros_gormaz_agrupaciones_2011] y en barrios patrimonializados [@uribe_patrimonializacion_2014]. 
+
+Considerando estos antecedentes, la presente investigación busca contribuir desde un análisis multinivel a la discusión sobre la cohesión barrial en las ciudades neoliberales. Pretende explicar en qué medida afectan a la cohesión barrial fenómenos de nivel individual, como lo son las percepciones individuales sobre la calidad de las relaciones sociales, sobre la reputación barrial y sobre las conflictividades micro y meso sociales; así como el efecto que tienen factores contextuales relativos a la desigualdad socio-espacial, como lo son la accesibilidad, la densidad poblacional y las tasas de violencia y sustracción de cada afecta a cada zona de la urbe.
+
+Ahora bien, ¿qué entendemos por cohesión?, el concepto cohesión barrial se enmarca en el de cohesión social, a saber, aquello que mantiene unidas a las sociedades e integra a los individuos [@somma_paradojas_2015]. @vergolini_social_2011 la define como estado de cosas acerca de las interacciones sociales, esto es, como un resultado de las relaciones sociales que, a nivel societal, se expresa en un sentido de pertenencia a la sociedad y en la confianza a las instituciones. No obstante, estos autores reconocen que es un concepto multidimensional que se expresa tanto a nivel sistémico como individual.
+
+Bajo esta acepción de cohesión social, tomamos una de las definiciones de cohesión barrial esbozadas por @smith_measuring_1975, a saber, aquella de nivel psicológico o percibido, que entiende cohesión barrial como la identificación personal del individuo al barrio y a los otros residentes. Sobre esto, @scannell_defining_2010 sitúan al barrio como espacio de socialización, que produce un sentido de hogar y pertenencia que se expresa en el surgimiento de lazos con el entorno. La identidad se forma vinculada a estos sentimientos respecto a los lugares, así como al significado que los sujetos le otorgan su espacio [@crow_my_1994].
+
+Turner (1990) (citado en [@kearns_social_2000]) señala que la identidad conlleva un sentimiento de integración al colectivo, de tener un lugar dentro del barrio que se corresponde con un equilibrio de deberes y expectativas entre los vecinos. De esta manera, surge un entrelazamiento de identidades que conlleva la adhesión a valores comunes y a la disposición a construir comunidad. 
+
+A partir de la conceptualización esbozada, la cohesión estará medida por el sentido de pertenencia al barrio y la confianza depositada en vecinos, es decir, por los vínculos simbólicos con el barrio [@kearns_social_2000]. Ahora bien, es importante mencionar que este aspecto o dimensión de la cohesión barrial no incluye un segundo aspecto que se entiende como la objetivación del primero [@novy_social_2012], es decir, a los comportamientos de participación local y apoyo social que expresan cohesión barrial. 
+
+Un aspecto relacionado a la cohesión barrial es la sociabilidad dentro del barrio, pues esta propicia el mantenimiento del sentido de pertenencia en el tiempo y la disposición de construir capital social para mantener al barrio unido [@kearns_social_2000]. Para esto, es clave que se perciba compromiso y reciprocidad (Putnam, 2000, citado en González, 2019). Además, implica una convivencia armoniosa en donde persiste el respeto, según Giddens (1994) y Wrong (1994) (citados en [@kearns_social_2000]).  De esta manera, se operacionaliza este aspecto como calidad de las relaciones sociales en el barrio. 
+
+En cuanto a la relación entre calidad de las relaciones y cohesión barrial, @lewicka_ways_2005 indica que existe un impacto positivo de los lazos sociales entre vecinos en el sentido de pertenencia al barrio, sin embargo, esta relación está mediada en tanto los lazos son más importantes para personas con menos capital cultural. Al mismo tiempo que situaciones de pobreza y desesperanza pueden trastocar negativamente el sentido de pertenencia al barrio. A pesar de esta aparente contradicción, la autora enfatiza en no confundir ambos conceptos, pues son esencialmente distintos, mientras que da luces de la influencia del contexto en la relación que se establece entre los lazos sociales y la cohesión barrial.
+
+Conflicto barrial es conceptualizado como desorden e inestabilidad de un supuesto equilibrio territorial [@routledge_introduction_2010]. Tiene diferentes niveles de impacto en la vida barrial [@mendez_neighbourhood_2018]. El nivel macro refiere, en el contexto específico chileno, a las consecuencias de la desigualdad estructural. En este sentido, se expresa en los efectos de la segregación socio-espacial, concentración de la pobreza y densificación [@musterd_socioeconomic_2017; @rodriguez_con_2015], lo que a su vez tiende a reproducir la desigualdad de accesibilidad a servicios y equipamientos.
+
+Sobre este nivel de conflictividad, adscribimos a una postura crítica para afirmar que las desigualdades y vulnerabilidades estructurales se expresan y se reproducen en el territorio a nivel meso y micro social, afectando no solo la cantidad de recursos disponibles de cada municipio para mejorar la accesibilidad a servicios, sino que repercutiendo en conflictos meso y micro-sociales y dificultando la cohesión barrial de personas de barrios vulnerables [@peck_neoliberal_2013]. 
+
+Para la conflictividad meso y micro social, seguimos el informe del [@mendez_ciudad_2017] que indica la existencia de dimensiones de conflictividad urbana relacionadas con las tensiones estructurales, en donde los procesos de estigmatización territorial y exclusión social se cristalizan a nivel meso-social, profundizando prácticas de auto-segregación de individuos de barrios con mala reputación, sentimientos de inseguridad y experiencias de criminalidad. Así mismo, a nivel micro, la conflictividad implica problemas de convivencia entre vecinos que afectan la armonía cotidiana y doméstica.
+
+En cuanto a los factores que inciden en la cohesión, la literatura muestra una rica discusión conceptual y empírica. Una línea de autores ha indicado que los conflictos meso-sociales aparecen como un detonador de mayor cohesión en tanto esta es un mecanismo de defensa frente a la inseguridad o la estigmatización [@biskupovic_accion_2011; @casgrain_gentrificacion_2013; @forrest_social_2001]. Sin embargo, otra línea de autores afirman que esa relación está sujeta al contexto, en tanto la mala reputación barrial y la tasa de violencia y delitos afecta la inclusión social de sus habitantes [@arthurson_mixed_2013] y la calidad de las relaciones sociales [@kaztman_calidad_2007] trayendo baja cohesión barrial [@cassiers_socio-spatial_2012]. Mientras que ocurre el caso contrario para los barrios homogéneos cuyo capital social facilita la cohesión dentro del barrio, usualmente, cuando tienen buen acceso a servicios y menor conflictividad [@rodriguez_con_2015].
+
+Asimismo, se ha afirmado que los conflictos micro-sociales, es decir, entre los vecinos afectan de manera negativa la cohesión barrial, pues debilita la calidad de los lazos y la convivencia armoniosa [@forrest_social_2001], poniendo en riesgo aspectos esenciales de la cohesión como lo son la seguridad y la ausencia de odio. Se indica que esto también varía según el barrio, en tanto la conflictividad micro tiende a disminuir en lugares donde se concentra la riqueza —y por ende, tiene mayor acceso a equipamiento— y a aumentar en lugares donde hay mayor estigmatización y densidad de habitantes, repercutiendo en la cohesión barrial [@mendez_neighbourhood_2018].
+
+En suma, la literatura permite situar a la cohesión barrial como un fenómeno sujeto a ser explicado por fenómenos de nivel individual. al mismo tiempo que estos son mediados por factores de nivel contextual, en donde se vuelve relevante observar el caso de la ciudad neoliberal de Santiago y las repercusiones que la desigualdad socio-espacial tienen sobre la cohesión.
+
+# **II. Objetivos e hipótesis**
+
+### *Objetivos generales*
+
+Explicar cohesión barrial en el Gran Santiago a partir de (a) variables de nivel individual sobre percepciones y sentimientos en torno al barrio, (b) variables de nivel contextual sobre indicadores territoriales de desigualdad socio-espacial agrupados por zona censal, y (c)  interacciones entre niveles individual y contextual que moderan el efecto sobre la cohesión según la zona de censal de residencia. 
+
+### *Objetivos específicos*
+
+##### 1. Nivel Individual
+
+1.1.  Estimar el efecto de la de la calidad de las relaciones sociales en el barrio en la cohesión barrial.
+
+1.2. Estimar el efecto del conflicto microsocial en la cohesión barrial.
+
+1.3. Estimar el efecto del conflicto mesosocial en la cohesión barrial.
+
+1.4. Estimar el efecto de la reputación barrial en la cohesión barrial.
+
+
+##### 2. Nivel contextual
+
+2.1. Estimar el efecto de los indicadores de criminalidad del barrio en la cohesión barrial. 
+
+2.2. Estimar el efecto la accesibilidad a servicios públicos en el barrio en la cohesión barrial.
+
+2.3. Estimar el efecto de los indicadores de nivel socioeconómico del barrio en la cohesión barrial.
+
+##### 3. Interacción entre niveles
+
+3.1. Evaluar la influencia contextual del puntaje de violencia del barrio, del acceso a servicios públicos en el barrio y de la reputación barrial de la zona en el efecto estimado de la calidad de las relaciones sociales en el barrio sobre la cohesión barrial.
+
+3.2. Evaluar la influencia contextual de la densidad poblacional y del acceso a servicios públicos en el barrio en el efecto estimado de la conflictividad microsocial sobre la cohesión barrial.
+
+3.3. Evaluar la influencia contextual del puntaje de violencia del barrio en el efecto estimado del conflicto mesosocial sobre la cohesión barrial.
+
+3.4. Evaluar la influencia contextual del puntaje de violencia del barrio en el efecto estimado de la reputación barrial sobre la cohesión barrial. 
+
+
+### *Hipótesis*
+
+##### 1. Nivel Individual
+
+1.1.  Hay un efecto positivo de la calidad de las relaciones sociales en el barrio en la cohesión barrial.
+
+1.2. Hay un efecto negativo de la conflictividad microsocial en la cohesión barrial.
+
+1.3. Hay un efecto negativo de la conflictividad a nivel mesosocial en la cohesión barrial.
+
+1.4. Hay un efecto positivo de la reputación barrial en la cohesión barrial.
+
+##### 2. Nivel contextual
+
+2.1. Hay un efecto negativo de los indicadores de criminalidad del barrio en la cohesión barrial.
+
+2.2 Hay un efecto positivo de la accesibilidad a servicios públicos en el barrio en la cohesión barrial.
+
+2.3 Hay un efecto negativo de la densidad poblacional del barrio en la cohesión barrial.
+
+##### 3. Interacción entre niveles
+
+3.1 El efecto de la calidad de las relaciones sociales sobre la cohesión barrial está mediado por el contexto; en donde el puntaje de violencia del barrio tiene un efecto negativo y el acceso a servicios públicos y la reputación barrial tienen un efecto positivo en la relación.
+
+3.2 El efecto de la conflictividad microsocial sobre la cohesión barrial está mediado por el contexto; en donde la densidad poblacional y el acceso a servicios públicos tienen un efecto negativo en la relación.
+
+3.3 El efecto de la conflictividad mesosocial sobre la cohesión barrial está mediado por el contexto; en donde el puntaje de violencia del barrio tiene un efecto positivo en la relación.
+
+3.4 El efecto de la reputación barrial sobre la cohesión barrial está mediado por el contexto; en donde el puntaje de violencia tiene un efecto negativo en la relación.
+
+
+
+# **III. Metodología**
+
+Para dar cuenta de la cohesión barrial y los fenómenos de nivel individual y contextual que la explican se hizo uso del Estudio Longitudinal Social de Chile (ELSOC) del Centro de estudios de Conflicto y Cohesión Social (COES), cuyos datos fueron producidos en el 2016. La muestra obtenida a través de un muestreo probabilístico, estratificado y por conglomerados incluye un total de 2927 casos a nivel nacional, de los cuales se seleccionaron 720 casos pertenecientes al Gran Santiago. Luego de restar los valores perdidos se obtuvo una muestra final de 651 casos. La identificación de las unidades de nivel 2 se realizó por zonas censales, cuyo número de casos es de 184 en el Gran Santiago.
+
+Las principal variable utilizada es *Cohesión Barrial Percibida*. El resto de las variables se dividen entre las de nivel individual y las de nivel contextual. Las primeras corresponden a los sentimientos o percepción de los sujetos en torno al barrio de residencia: *Índice de Conflictos Mesosociales*, *Índice de Conflictos Microsociales*, *Calidad de las Relaciones Sociales en el Barrio* y *Reputación Barrial*. Las segundas, agrupadas por zona, dan cuenta de la conflictividad macrosocial. Los indicadores territoriales más relevantes para el análisis son: *Puntaje de Violencia*, *Accesibilidad a Servicios Públicos*, *Densidad Poblacional* y *Reputación Barrial por Zona*.
+
+La variable explicada, cohesión barrial, se construyó como un índice sumatorio simple a partir de cinco ítems que miden nivel de identificación y apego al barrio y uno que mide nivel de confianza en vecinos. Los cuatro primeros ítems miden la identificación y apego que siente la persona en escalas de Likert que responden a la pregunta ¿qué tan de acuerdo o en desacuerdo está con las siguientes afirmaciones?: (i) Este barrio es ideal para mí, (ii) Me siento integrado/a a este barrio, (iii) Me identifico con la gente de este barrio y (iv) Este barrio es parte de mí; puntuado de 1 a 5, siendo 1 totalmente en desacuerdo y 5 totalmente de acuerdo. El nivel de confianza en vecinos también está medido en escala Likert siendo 1 “muy poco” y 5 “mucho”. Se opta por dividir la totalidad de puntuación por la cantidad de indicadores para facilitar el análisis. En consecuencia, el índice construido oscila de manera continua entre valores 1 y 5, siendo 1 muy poco cohesionado y 5 muy cohesionado.
+
+Para los predictores de nivel individual se procede de igual manera. Tanto el índice de conflictividad meso-social como el índice de conflictividad micro-social oscilan entre valores de 1 a 5, siendo 1 nulo nivel de conflicto y 5 alto nivel de conflicto. Luego, la calidad de relaciones sociales en el barrio oscila entre 1 y 5, siendo 1 muy baja calidad y 5 muy alta calidad. Para reputación barrial los valores oscilan entre 1 y 5, siendo 1 mala reputación y 5 buena reputación. Por último, se recodifica la variable “Nivel del sentimiento de Seguridad en el barrio”, invirtiendo sus valores de modo que 1 indique mucha seguridad y 5 mucha inseguridad en el barrio. El resto de variables conservan sus valores originales.
+
+Por su parte, las variables de nivel 2 pertenecen a una base de datos ELSOC ampliada que incorpora indicadores territoriales elaborados por el Centro de Inteligencia Territorial (CIT, 2018). Entre ellos se utilizan:
+a)Densidad de la población por hectárea.
+b)Accesibilidad a servicios y equipamientos públicos (incluye equipamientos deportivos, culturales, de salud y otros servicios públicos) considerando el ajuste entre oferta (número y tamaño de equipamientos) y demanda (población) en un radio de 15 minutos a pie (aprox. 1 km).
+c)Puntaje de violencia urbana (Catastro Ministerio del Interior 2012), incluye delitos de alta violencia, armas, drogas y agresiones).
+
+El detalle de la operacionalización y medición de las variables se adjunta en la siguiente tabla:
+
+![Tabla de operacionalización. Fuente: elaboración propia en base en base a datos de ELSOC 2016, COES (2017)](https://raw.githubusercontent.com/cristobalortizvilches/dse_spb/master/1_input/images/operacionalizacion.png)
+
+Posteriormente, se evalúan modelos multinivel que incorporan indicadores territoriales e individuales en la explicación de cohesión barrial según zona. Para esto, se construyen cuatro modelos: modelo nulo sin predictores, modelo con predictores de nivel 1, modelo con predictores de nivel contextual y, finalmente, se elabora un modelamiento multinivel que incorpora tanto los predictores individuales como contextuales. Este último se puede apreciar en la siguiente ecuación y diagrama:
+
+
+$CohesionBarrial_{ij} = γ_{00}+γ_{10}ConfMicro+γ_{20}ConfMeso+γ_{30}CalidadRRSS+γ_{40}RepBarrial+...$
+$...+γ_{01}Dens+γ_{02}Viol+γ_{03}Serv+γ_{04}RepBZona+μ_{01}+μ_{02}+μ_{03}+μ_{04}+r_{10}+r_{20}+r_{30}+r_{40}$
+
+
+![Diagrama modelo multinivel Cohesión Barrial. Fuente: elaboración propia ](https://raw.githubusercontent.com/cristobalortizvilches/dse_spb/master/1_input/images/diagrama1.jpg)
+
+Finalmente, se comparan modelos con pendiente fija y con pendiente aleatoria y, posteriormente, modelos con interacción entre niveles. El siguiente diagrama grafica las interacciones entre niveles que serán analizadas:
+
+![Diagrama modelos de interacción entre niveles. Fuente: elaboración propia ](https://raw.githubusercontent.com/cristobalortizvilches/dse_spb/master/1_input/images/diagrama2.jpg)
+
+# **IV. Análisis y resultados**
+
+### *Modelos de regresión múltiple nivel 1*
+
+El primer modelo de regresión lineal múltiple arroja que existe una relación negativa baja y significativa entre conflictos meso-sociales y cohesión barrial, por lo que se descarta que los conflictos meso sociales puedan estar asociados positivamente a la cohesión barrial, además la varianza explicada por este modelo es bastante baja, alcanzando tan sólo 14% de capacidad explicativa. El segundo modelo arroja una relación negativa baja y significativa entre conflicto meso-social y cohesión, así como entre conflicto micro-social y cohesión; por su parte, la varianza explicada por el modelo alcanza un 16%, mejorando en dos puntos porcentuales la predicción. 
+
+El modelo 3 arroja una relación negativa muy baja y significativa entre conflictos meso-sociales y cohesión, lo mismo ocurre entre conflictos micro sociales y cohesión barrial, no obstante, arroja una relación positiva moderada entre calidad de las relaciones sociales y cohesión barrial con un alto nivel de significancia. Por su parte, la varianza explicada del modelo 3 asciende a 43%, por lo que mejora considerablemente la capacidad explicativa respecto a los dos modelos antes descritos. Finalmente, el modelo 4 incorpora reputación barrial, la que se relaciona positiva y significativamente con la cohesión, alcanzado a explicar el 46% de la varianza.
+
+![Tabla de regresión múltiple para modelos de regresión de nivel 1. Fuente: elaboración propia ](https://raw.githubusercontent.com/cristobalortizvilches/dse_spb/master/3_output/tablas/modelos_nvl1.png)
+
+
+# **V. Discusión de resultados**
+
+En lo que respecta a las hipótesis de nivel 1, en base a los modelos podemos concluir que:
+
+La cohesión barrial disminuye en la medida que los individuos se enfrentan a una mayor conflictividad meso-social, por lo que la primera hipótesis se descarta. Existe capacidad explicativa por parte de este tipo de conflictividad, no obstante es muy baja.
+
+La cohesión barrial disminuye en la medida que los individuos experimentan una mayor conflictividad al interior de su barrio, por lo que la segunda hipótesis se corrobora. Existe capacidad explicativa por parte de este tipo de conflictividad, no obstante es muy baja.
+
+La cohesión barrial aumenta en la medida que se percibe mejor calidad de las relaciones sociales en el barrio, por lo que se corrobora la tercera hipótesis. Además, la presencia de calidad de las relaciones sociales explica en una buena medida las manifestaciones de cohesión barrial.
+
+La cohesión barrial aumenta en la medida que se percibe mejor reputación barrial, por lo que la cuarta hipótesis se corrobora.  Existe capacidad explicativa por parte de esta variable, no obstante es baja.
+
+# **VI. Bibliografía**
+
+<div/>
