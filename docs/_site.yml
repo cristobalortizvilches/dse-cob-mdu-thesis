@@ -4,7 +4,8 @@ navbar:
   title: "Desigualdad socioespacial y cohesión barrial"
   right:
     - text: "Propuesta"
-      href: ""
+      href: "../lectures/propuesta-mdu-ieut/det-apego-barrial.html"
+    - text: ""
       icon: fa-github fa-lg
       href: https://github.com/cristobalortizvilches/dse-cob-tesis
 output:

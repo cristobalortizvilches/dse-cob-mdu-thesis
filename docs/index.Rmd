@@ -6,4 +6,4 @@ output: html_document
 ---
 Este proyecto de investigación es un intento de explicar sistemáticamente la relación entre la desigualdad socioespacial y las formas de cohesión barrial en el Gran Santiago. Para ello, se realiza un análisis de ecuaciones estructurales multinivel con datos longitudinales de ELSOC.
 
-![](https://raw.githubusercontent.com/cristobalortizvilches/dse_spb/master/1_input/images/urban-cranes.png)
+![](https://raw.githubusercontent.com/cristobalortizvilches/dse-cob-tesis/master/1_input/images/urban-cranes.png)
