@@ -36,9 +36,8 @@ load("../1_input/data/procesada/elsoc_barrio.RData")
 ```
 
 ```{r correlation}
-
 elsoc_sub <- elsoc_barrio %>% 
-  select(apbi, soci, segui, repbi, acci, hete) %>% 
+  select(idencuesta, apbi, soci, segui, repbi, acci, hete, essui) %>% 
   drop_na()
 
 correl = cor(elsoc_sub)
@@ -59,6 +58,8 @@ pairs.panels(elsoc_sub,
              ci = TRUE)          # If TRUE, adds confidence intervals
 ```
 
+# Mediación
+
 ```{r lrm-models}
 #Path c': efecto de segregación sobre cohesión
 fitmed1 <- lm(apbi ~ hete, data = elsoc_sub)
@@ -72,7 +73,7 @@ summary(fitmed2) #path b: 0.33281***
 summary(fitmed3) #path a: -0.3240** 
 ```
 
-```{r sem-models}
+```{r med-model}
 med_1 <- ' # direct effect
              apbi ~ c*hete
            # mediator
@@ -87,7 +88,7 @@ fitmed4 <- sem(med_1, data = elsoc_sub, se = "bootstrap", bootstrap = 5000)
 
 summary(fitmed4, standardized = TRUE) 
 
-#path c'= 0.05 (no significativo)
+#path c'= 0.15 (no significativo)
 #path b =  0.33***
 #path a = -0.32** 
 #a*b = -0.108**
@@ -100,6 +101,37 @@ lavaanPlot(name = "model1", fitmed4, coefs = TRUE)
 lavaanPlot(model = fitmed4, node_options = list(shape = "box", fontname = "Helvetica"), edge_options = list(color = "black"), coefs = TRUE, stars = "coefs")
 
 lavaanExtra::nice_lavaanPlot(model = fitmed4, stand = F)
+```
+
+# Moderación
+
+```{r mod-model}
+# Estimar modelo de tres pasos
+fitint1 <- lm(repbi ~ hete, data = elsoc_sub)
+fitint2 <- lm(repbi ~ hete + essui, data = elsoc_sub)
+fitint3 <- lm(repbi ~ hete * essui, data = elsoc_sub)
+
+summary(fitint1) # b(hete) = -0.3240**
+summary(fitint2) # b(hete) = -0.17879 | b(essu) = 0.34990***
+summary(fitint3) # b(hete:essu) = 0.06073 (no-sig)
+```
+
+```{r}
+# Para w se seleccionan valores condicionales (–1DT, +1DT) para graficar los efectos simples
+theme_set(theme_sjplot())
+plot_model(fitint3, type = "pred", terms = c("hete", "essui"))
+```
+
+```{r}
+elsoc_sub$xw <- elsoc_sub$hete*elsoc_sub$essui
+
+mod1c <- ' # Efectos principales e interacción
+             repbi ~ b1*hete
+             repbi ~ b2*essui
+             repbi ~ b3*hete:essui
+         '
+fitmod1c <- sem(mod1c, data = elsoc_sub)
+summary(fitmod1c)
 ```
 
 

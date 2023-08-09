@@ -77,8 +77,8 @@ elsoc_gs <- elsoc_gs %>%
                        labels = c('18-29', '30-49', '50-64', '65 o más')),
          educ = factor(car::recode(m01_w06,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
                        labels = c("Básica", "Media", "Técnica", "Universitaria")),
-         essu = factor(car::recode(d01_01_w06, "c(0,1,2,3)=1; c(4,5)=2; c(6,7,8,9,10)=3"),
-                      labels = c("Baja", "Media", "Alta")),
+         essu = factor(car::recode(d01_01_w06, "c(6,7,8,9,10)=1; c(4,5)=2; c(0,1,2,3)=3"),
+                      labels = c("Alto", "Medio", "Bajo")),
          regi = factor(car::recode(m33_w05, "1:2=1;3:7=2"),
                            labels = c('Propietario','No propietario')),
          time = m34_03_w03) %>% 
@@ -89,15 +89,21 @@ elsoc_gs <- elsoc_gs %>%
              cnfi = "Confianza en vecinos",
              jjvv = "Membresía junta vecinal",
              segu = 'Seguridad barrial',
+             t10_w06 = 'Seguridad barrial',
              acci = 'Sastifacción residencial',
              repb = 'Reputación barrial',
+             t08_w06 = 'Reputación barrial',
              sexo = 'Sexo/Género',
              edad = 'Tramo etario',
              educ = 'Nivel educacional',
              essu = 'Estatus social subjetivo',
              regi = 'Régimen de propiedad vivienda',
              time = 'Tiempo de residencia',
-             jh_esc_sd = 'Heterogeneidad residencial')
+             jh_esc_sd = 'Heterogeneidad residencial',
+             d01_01_w06 = 'Estatus social subjetivo')
+
+elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1
+
 ```
 
 ```{r save-dataset}
@@ -105,7 +111,7 @@ elsoc_barrio <- elsoc_gs %>%
   select(idencuesta, segmento_disenno, comuna_w06, comuna_cod_w06, #ids
          apbi, apbr, soci, cnfi, jjvv, segu, segui=t10_w06, acci, repb, repbi=t08_w06 , #cohesión y mecanismos
          sexo, edad, educ, essu, regi, time, #controles
-         hete=jh_esc_sd) #variables territoriales comuna
+         hete=jh_esc_sd, essui=d01_01_w06) #
 
 save(elsoc_barrio, file = "../1_input/data/procesada/elsoc_barrio.RData")
 ```
