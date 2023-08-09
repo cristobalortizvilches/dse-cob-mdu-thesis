@@ -1,4 +1,0 @@
-"";"npar";"AIC";"BIC";"logLik";"deviance";"Chisq";"Df";"Pr(>Chisq)"
-"lmer(apbi ~ 1 + (1 | distrito), data = elsoc_ent_na, REML = FALSE)";3;1589,82943218939;1603,11859062351;-791,914716094695;1583,82943218939;NA;NA;NA
-"lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + (1 | distrito), data = elsoc_ent_na, REML = FALSE)";12;1236,75709189003;1289,9137256265;-606,378545945015;1212,75709189003;371,07234029936;9;2,01718833865125e-74
-"lmer(apbi ~ 1 + soci + cnfi + segu + acci + geni + repb + desi + dens_dto + sded_dto + accs_dto + repb_dto + (1 | distrito), data = elsoc_ent_na, REML = FALSE)";16;1236,03148378939;1306,90699543801;-602,015741894693;1204,03148378939;8,72560810064465;4;0,0683361022695676

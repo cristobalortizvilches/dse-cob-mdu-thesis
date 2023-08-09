@@ -1,0 +1,116 @@
+---
+title: "Código preparación"
+author: "Cristóbal Ortiz"
+output: html_document
+---
+
+```{r set-markdown,include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE, cache = TRUE)
+knitr::opts_knit$set(root.dir = "../")
+options(scipen=999)
+options(knitr.kable.NA = '')
+```
+
+```{r load-library}
+library(tidyverse)
+library(openxlsx)
+library(sjmisc)
+library(sjlabelled)
+library(scales)
+```
+
+```{r load-dataset}
+getwd()
+remove(list = ls())
+
+load(url("https://dataverse.harvard.edu/api/access/datafile/6160180")) #ola 5 2021
+load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #wide 2016-2022
+#load(url("https://dataverse.harvard.edu/api/access/datafile/7245113")) #long 2026-2022 (no funka link)
+datos_terr <- readxl::read_excel("../1_input/data/original/dterr-w01-w04/BASE_2019_COD.xlsx")
+
+elsoc_2022 <- elsoc_wide_2016_2022.2 %>% 
+  select(idencuesta, estrato_disenno, segmento_disenno, c07_01_w05, m33_w05, m34_03_w03, ends_with("_w06"))
+  
+elsoc_terr <- dplyr::left_join(x = elsoc_2022, y = datos_terr, by = "idencuesta")
+```
+
+```{r clean-dataset}
+#selección de variables
+elsoc_gs <- elsoc_terr %>% 
+  filter(estrato_w06 == 1) %>% 
+  dplyr::select(idencuesta, #id individual
+                estrato_disenno, segmento_disenno, comuna_w06, comuna_cod_w06, #id geográficos
+                starts_with("t02_"), starts_with("t03_"), t01_w06, t05_w06, c12_01_w06, c07_01_w05, # cohesión barrial
+                starts_with("t06_"), t08_w06, t10_w06, # mecanismos subjetivos 
+                jh_esc_sd, #segregación residencial
+                m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m33_w05, m34_03_w03) #controles 
+
+#convertimos no sabe/no responde/no disponible/sin dato/no aplica a NA
+elsoc_gs[elsoc_gs == -888 | elsoc_gs == -999 | elsoc_gs == 994 | elsoc_gs == 995 | elsoc_gs == 996 | elsoc_gs == -666 | elsoc_gs == -777] <- NA
+```
+
+```{r manipulate-variables}
+elsoc_gs <- elsoc_gs %>% 
+  remove_all_labels() %>%
+  #-----Recode Y: cohesión barrial
+  mutate(apbi = (t02_01_w06 + t02_02_w06 + t02_03_w06 + t02_04_w06)/4) %>% 
+  mutate(apbr = factor(case_when(apbi < 2 ~ 1, apbi < 3 ~ 2,
+                                 apbi < 4 ~ 3, apbi <= 5 ~ 4),
+                           labels = c('Muy Bajo', 'Bajo', 'Medio', 'Alto')),
+         soci = (t03_01_w06 + t03_02_w06 + t03_03_w06 + t03_04_w06)/4,
+         cnfi = t01_w06,
+         jjvv = factor(car::recode(c12_01_w06, "1=1;2:3=2"),
+                           labels = c('No miembro','Miembro')),
+   #-----Recode M: mecanismos subjetivos 
+         segu = factor(car::recode(t10_w06, "1:2=1;3=2;4:5=3"),
+                           labels = c("Baja",
+                                      "Media",
+                                      "Alta")),
+         acci = (t06_02_w06 + t06_05_w06 + t06_06_w06 + t06_07_w06)/4,
+         repb = factor(car::recode(t08_w06, "1:2=1;3=2;4:5=3"),
+                             labels = c("Negativa",
+                                        "Neutra", 
+                                        "Positiva")),
+  #-----Recode controles socio-demográficas
+         sexo = factor(m0_sexo_w06, labels = c('Hombre', 'Mujer')),
+         edad = factor(car::recode(m0_edad_w06, "18:29=1; 30:49=2; 50:64=3; 65:150=4"),
+                       labels = c('18-29', '30-49', '50-64', '65 o más')),
+         educ = factor(car::recode(m01_w06,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
+                       labels = c("Básica", "Media", "Técnica", "Universitaria")),
+         essu = factor(car::recode(d01_01_w06, "c(0,1,2,3)=1; c(4,5)=2; c(6,7,8,9,10)=3"),
+                      labels = c("Baja", "Media", "Alta")),
+         regi = factor(car::recode(m33_w05, "1:2=1;3:7=2"),
+                           labels = c('Propietario','No propietario')),
+         time = m34_03_w03) %>% 
+  #-----Etiqueta variables
+  var_labels(apbi = "Apego Barrial",
+             apbr = "Apego Barrial",
+             soci = "Sociabilidad barrial",
+             cnfi = "Confianza en vecinos",
+             jjvv = "Membresía junta vecinal",
+             segu = 'Seguridad barrial',
+             acci = 'Sastifacción residencial',
+             repb = 'Reputación barrial',
+             sexo = 'Sexo/Género',
+             edad = 'Tramo etario',
+             educ = 'Nivel educacional',
+             essu = 'Estatus social subjetivo',
+             regi = 'Régimen de propiedad vivienda',
+             time = 'Tiempo de residencia',
+             jh_esc_sd = 'Heterogeneidad residencial')
+```
+
+```{r save-dataset}
+elsoc_barrio <- elsoc_gs %>% 
+  select(idencuesta, segmento_disenno, comuna_w06, comuna_cod_w06, #ids
+         apbi, apbr, soci, cnfi, jjvv, segu, segui=t10_w06, acci, repb, repbi=t08_w06 , #cohesión y mecanismos
+         sexo, edad, educ, essu, regi, time, #controles
+         hete=jh_esc_sd) #variables territoriales comuna
+
+save(elsoc_barrio, file = "../1_input/data/procesada/elsoc_barrio.RData")
+```
+
+```{r information}
+sessionInfo()
+```
+

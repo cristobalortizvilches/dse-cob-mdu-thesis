@@ -1,3 +1,0 @@
-"";"call";"Model";"df";"AIC";"BIC";"logLik";"Test";"L.Ratio";"p-value"
-"nlme::gls(apbi ~ 1, data = elsoc_ent_na, method = ""ML"")";"nlme::gls(model = apbi ~ 1, data = elsoc_ent_na, method = ""ML"")";1;2;1604,3532318831;1613,21267083918;-800,176615941549;"";NA;NA
-"nlme::lme(apbi ~ 1, data = elsoc_ent_na, random = ~1 | distrito, method = ""ML"")";"lme.formula(fixed = apbi ~ 1, data = elsoc_ent_na, random = ~1 |     distrito, method = ""ML"")";2;3;1589,82943218944;1603,11859062356;-791,91471609472;"1 vs 2";16,5237996936571;4,80432368166862e-05
