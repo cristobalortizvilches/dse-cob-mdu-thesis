@@ -1,0 +1,363 @@
+---
+title: "Código de Análisis de Datos"
+author: "Cristóbal Ortiz"
+output: html_document
+---
+
+```{r Ajustes de Markdown,include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE, cache = TRUE)
+knitr::opts_knit$set(root.dir = "../")
+options(scipen=999)
+options(knitr.kable.NA = '')
+```
+
+```{r Cargar paquetes, include=FALSE}
+library(tidyverse)
+library(lme4)
+library(texreg)
+library(vtable)
+library(psych)
+library(sjPlot)
+library(cowplot)
+
+library(lavaan)
+library(lavaanPlot)
+library(semPlot)
+library(foreign)
+library(sjmisc)
+library(knitr)
+
+library(gstat)
+library(raster)
+library(rgdal)
+library(rworldxtra)
+library(sf)
+library(sp)
+
+```
+
+```{r load-dataset-proc, include=FALSE}
+getwd()
+rm(list=ls())
+load("../1_input/data/procesada/elsoc_gs.RData")
+load("../1_input/data/procesada/elsoc_gs_short.RData")
+load("../3_output/modelos/sem_models.RData")
+#View(elsoc_sub)
+```
+
+
+```{r correlation}
+elsoc_sub <- elsoc_gs_short %>% 
+  select(idencuesta, apbi, soci, segui, repbi, acci, essui, educi, hete, hi_theil) %>% 
+  drop_na()
+
+correl = cor(elsoc_sub)
+
+pairs.panels(elsoc_sub,
+             smooth = TRUE,      # If TRUE, draws loess smooths
+             scale = FALSE,      # If TRUE, scales the correlation text font
+             density = TRUE,     # If TRUE, adds density plots and histograms
+             ellipses = F,       # If TRUE, draws ellipses
+             method = "pearson", # Correlation method (also "spearman" or "kendall")
+             pch = 21,           # pch symbol
+             lm = TRUE,          # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
+             cor = TRUE,         # If TRUE, reports correlations
+             jiggle = FALSE,     # If TRUE, data points are jittered
+             factor = 2,         # Jittering factor
+             hist.col = 4,       # Histograms color
+             stars = TRUE,       # If TRUE, adds significance level with stars
+             ci = TRUE)          # If TRUE, adds confidence intervals
+```
+
+# Modelo estructural
+
+## Alternativa 1: modelo simple (Bahamondes)
+
+```{r lrm-models}
+#Path c': efecto de segregación sobre cohesión
+fitmed1 <- lm(apbi ~ hete, data = elsoc_sub)
+#Path b: efecto de reputación sobre cohesión
+fitmed2 <- lm(apbi ~ hete + repbi, data = elsoc_sub)
+#Path a: efecto de segregación sobre reputación
+fitmed3 <- lm(repbi ~ hete, data = elsoc_sub)
+
+summary(fitmed1) #path c': 0.04506 (no significativo)
+summary(fitmed2) #path b: 0.33281***
+summary(fitmed3) #path a: -0.3240** 
+```
+
+```{r med-model-1}
+sem_1 <- ' # direct effect
+             apbi ~ c*hete
+           # mediator
+             repbi ~ a*hete
+             apbi ~ b*repbi
+           # indirect effect (a*b)
+             ab := a*b
+           # total effect
+             total := c + (a*b)
+         '
+fitmed4 <- sem(sem_1, data = elsoc_sub, se = "bootstrap", bootstrap = 5000)
+
+summary(fitmed4, standardized = TRUE)
+
+#path c'= 0.15 (no significativo)
+#path b =  0.33***
+#path a = -0.32** 
+#a*b = -0.108**
+
+#al ser c' significativo y a*b también, podemos hablar de una mediación parcial. En este caso, la heterogeneidad social del barrio ejerce un efecto negativo sobre el apego barrial, pero a través del aumento de la reputación residencial. Al revés, la homogeneidad social tiene un efecto positivo sobre el apego, sólo cuando disminuye la reputación.
+```
+
+```{r plot-med-model-1}
+lavaanPlot(name = "model1", fitmed4, coefs = TRUE)
+
+lavaanExtra::nice_lavaanPlot(model = fitmed4, coefs = TRUE)
+```
+
+
+
+## Alternativa 2: modelo complejo (Miranda)
+
+```{r sem-model-2}
+sem_2 <- '
+# Structural Model
+apbi ~ b1*segui + b2*repbi + b3*acci + c1*hi_theil
+segui ~ a1*hi_theil
+repbi ~ a2*hi_theil
+acci ~ a3*hi_theil
+
+# Covarianzas
+segui ~~ repbi
+repbi ~~ acci
+segui ~~ acci
+
+# Efecto directo
+dir_theil_apbi := c1
+dir_theil_segui := a1
+dir_theil_repbi := a2
+dir_theil_acci := a3
+ 
+# Efecto indifecto
+ind_theil_segui_apbi := a1*b1
+ind_theil_repbi_apbi := a2*b2
+ind_theil_acci_apbi := a3*b3
+ 
+# Efecto total
+tot_hete_segui_apbi := c1 + (a1*b1)
+tot_hete_repbi_apbi := c1 + (a2*b2)
+tot_hete_acci_apbi := c1 + (a3*b3)
+'
+
+#fitsem_2 <- sem(sem_2, data=elsoc_sub, se = "bootstrap", bootstrap = 5000)
+summary(fitsem_2, fit.measures=TRUE, standardized=TRUE)
+```
+
+```{r plot-sem2}
+labels1 <- list(apbi = "Apego al\nbarrio", 
+                hi_theil = "Segregación\nresidencial", 
+                segui = "  Seguridad   \nbarrial", 
+                repbi = " Reputación \nbarrial", 
+                acci = "Satisfacción\nbarrial")
+
+plot_sem_ams <- lavaanExtra::nice_lavaanPlot(model = fitsem_2, stand = TRUE, labels = labels1, coefs = TRUE, sig = 0.05, node_options = list(shape = "box", fontname = "Serif"))
+plot_sem_ams
+save_png(plot_sem_ams, "../3_output/graficos/sem_ams.png")
+
+plot_model <- lavaanExtra::nice_lavaanPlot(model = fitsem_2, stand = TRUE, labels = labels1, coefs = F, sig = 0.05, node_options = list(shape = "box", fontname = "Serif"))
+plot_model
+save_png(plot_model, "../3_output/graficos/sem_model.png")
+```
+
+## Modelo estructural por clases sociales
+
+```{r dist-theil-educ}
+q <- quantile(elsoc_sub$hi_theil, probs = c(0.25, 0.5, 0.75))
+quantile(elsoc_sub$hi_theil)
+
+ggplot(elsoc_sub, aes(x = hi_theil)) + 
+  geom_histogram(aes(y=..density..),
+                   binwidth=.05,
+                   colour="gray", fill="gray") +
+  geom_density(alpha=.2, fill="purple") + 
+  geom_vline(xintercept = q[1], colour = "red") +
+  geom_text(aes(x=q[1], label="\n25%", y=1), colour="red", angle=90) +
+  geom_vline(xintercept = q[2], colour = "green") +
+  geom_text(aes(x=q[2], label="\n50%", y=1), colour="green", angle=90) +
+  geom_vline(xintercept = q[3], colour = "blue") +
+  geom_text(aes(x=q[3], label="\n75%", y=1), colour="blue", angle=90) +
+  scale_y_continuous(breaks = c(0, 1, 2, 3), 
+                     labels = c("0", "25", "50", "75")) +
+  xlab("Segregación residencial (Indice de Theil)") +
+  ylab("N de residentes")
+
+
+q2 <- quantile(elsoc_sub$educi, probs = c(0.25, 0.5, 0.75))
+quantile(elsoc_sub$educi)
+#  0%  25%  50%  75% 100% 
+#  1    4    5    7   10 
+
+ggplot(elsoc_sub, aes(x = educi)) + 
+  geom_histogram(aes(y=..density..),
+                   binwidth=1,
+                   colour="gray", fill="gray") +
+  geom_density(alpha=.2, fill="yellow") + 
+  geom_vline(xintercept = q2[1], colour = "red") +
+  geom_text(aes(x=q2[1], label="\n25%", y=0.05), colour="red", angle=90) +
+  geom_vline(xintercept = q2[2], colour = "green") +
+  geom_text(aes(x=q2[2], label="\n50%", y=0.05), colour="green", angle=90) +
+  geom_vline(xintercept = q2[3], colour = "blue") +
+  geom_text(aes(x=q2[3], label="\n75%", y=0.05), colour="blue", angle=90) +
+  scale_y_continuous(breaks = c(0.0, 0.1, 0.2),labels = c("0", "50", "100")) +
+  xlab("Nivel educacional") +
+  ylab("N de residentes")
+
+ggsave(filename = "../3_output/graficos/dist_educ.jpg", width = 25, height = 15, units = "cm")
+```
+
+```{r subset-class}
+quantile(elsoc_sub$educi)
+#  0%  25%  50%  75% 100% 
+#  1    4    5    7   10 
+
+#subset para 0%-25%
+elsoc_low <- elsoc_sub %>% 
+  filter(educi <= quantile(elsoc_sub$educi)[2]) 
+
+#subset para 25%-50%
+elsoc_middle_low <- elsoc_sub %>% 
+  filter((educi > quantile (elsoc_sub$educi)[2] &
+            educi <= quantile(elsoc_sub$educi)[3]))
+
+#subset para 50%-75%
+elsoc_middle_high <- elsoc_sub %>% 
+  filter((educi > quantile (elsoc_sub$educi)[3] &
+            educi <= quantile(elsoc_sub$educi)[4]))
+
+#subset para 75%-100%
+elsoc_high <- elsoc_sub %>% 
+  filter(educi > quantile (elsoc_sub$educi)[4])
+```
+
+```{r sem-low}
+#fitsem_low <- sem(sem_2, data=elsoc_low, se = "bootstrap", bootstrap = 5000)
+summary(fitsem_low, fit.measures=TRUE, standardized=TRUE)
+
+plot_sem_low <- lavaanExtra::nice_lavaanPlot(model = fitsem_low, stand = TRUE, labels = labels1, coefs = TRUE, sig = 0.05, node_options = list(shape = "box", fontname = "Serif"))
+save_png(plot_sem_ams, "../3_output/graficos/sem_low.png")
+```
+
+```{r sem-middle-low}
+#fitsem_middle_low <- sem(sem_2, data=elsoc_middle_low, se = "bootstrap", bootstrap = 5000)
+summary(fitsem_middle_low, fit.measures=TRUE, standardized=TRUE)
+
+plot_sem_middle_low <- lavaanExtra::nice_lavaanPlot(model = fitsem_middle_low, stand = TRUE, labels = labels1, coefs = TRUE, sig = 0.05, node_options = list(shape = "box", fontname = "Serif"))
+save_png(plot_sem_middle_low, "../3_output/graficos/sem_middle_low.png")
+
+```
+
+```{r sem-middle-high}
+#fitsem_middle_high <- sem(sem_2, data=elsoc_middle_high, se = "bootstrap", bootstrap = 5000)
+
+summary(fitsem_middle_high, fit.measures=TRUE, standardized=TRUE)
+plot_sem_middle_high <- lavaanExtra::nice_lavaanPlot(model = fitsem_middle_high, stand = TRUE, labels = labels1, coefs = TRUE, sig = 0.05, node_options = list(shape = "box", fontname = "Serif"))
+save_png(plot_sem_middle_high, "../3_output/graficos/sem_middle_high.png")
+```
+
+```{r sem-high}
+#fitsem_high <- sem(sem_2, data=elsoc_high, se = "bootstrap", bootstrap = 5000)
+
+summary(fitsem_high, fit.measures=TRUE, standardized=TRUE)
+plot_sem_high <- lavaanExtra::nice_lavaanPlot(model = fitsem_high, stand = TRUE, labels = labels1, coefs = TRUE, sig = 0.05, node_options = list(shape = "box", fontname = "Serif"))
+plot_sem_high
+save_png(plot_sem_high, "../3_output/graficos/sem_high.png")
+```
+
+
+```{r save-models}
+#save(fitsem_2, fitsem_low, fitsem_middle_low, fitsem_middle_high, fitsem_high, file = "../3_output/modelos/sem_models.RData")
+```
+
+
+# Análisis espacial
+
+```{r join-shapes}
+library(chilemapas)
+
+zonas_ams <- mapa_zonas %>% 
+  filter(codigo_region == 13) %>% 
+  rename("cod_zona" = "geocodigo") 
+
+zonas_ams$cod_zona <- as.numeric(zonas_ams$cod_zona)
+elsoc_ams <- dplyr::left_join(x = elsoc_gs_short, y = zonas_ams, by = "cod_zona") #sólo zonas con datos elsoc
+elsoc_ams2 <- dplyr::left_join(x = zonas_ams, y = elsoc_gs_short, by = "cod_zona") %>% #todas las zonas
+  filter(codigo_provincia == 131 | codigo_provincia == 132 | codigo_provincia == 134, #provincias ams excepto chacabuco
+         !codigo_comuna %in% c(13202, 13203, 13302, 13303, 13402, 13403, 13404)) #comunas fuera del ams
+```
+
+```{r plot-map-theil}
+plot_theil <- ggplot(data = elsoc_ams2) + 
+  geom_sf(aes(fill = hi_theil, geometry = geometry)) +
+  scale_fill_viridis_c(direction = -1) +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = " Segregación\n(índice de Theil)")
+plot_theil
+ggsave(filename = "../3_output/graficos/map-theil.jpg", width = 15, height = 15, units = "cm")
+```
+
+```{r plot-map-apbi}
+plot_apbi <- ggplot(data = elsoc_ams2) + 
+  geom_sf(aes(fill = apbi, geometry = geometry)) +
+  scale_fill_viridis_c(direction = -1, option = "plasma") +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = "Indice de\napego barrial")
+plot_apbi
+ggsave(filename = "../3_output/graficos/map-apbi.jpg", width = 15, height = 15, units = "cm")
+```
+
+
+
+----------------------------------------------------------------------------
+# Mediación moderada (no especificar aún)
+
+## Moderación
+
+```{r mod-model}
+# Estimar modelo de tres pasos
+fitint1 <- lm(repbi ~ hete, data = elsoc_sub)
+fitint2 <- lm(repbi ~ hete + essui, data = elsoc_sub)
+fitint3 <- lm(repbi ~ hete * essui, data = elsoc_sub)
+
+summary(fitint1) # b(hete) = -0.3240**
+summary(fitint2) # b(hete) = -0.17879 | b(essu) = 0.34990***
+summary(fitint3) # b(hete:essu) = 0.06073 (no-sig)
+```
+
+```{r}
+# Para w se seleccionan valores condicionales (–1DT, +1DT) para graficar los efectos simples
+theme_set(theme_sjplot())
+plot_model(fitint3, type = "pred", terms = c("hete", "essui"))
+```
+
+```{r}
+elsoc_sub$xw <- elsoc_sub$hete*elsoc_sub$essui
+
+mod1c <- ' # Efectos principales e interacción
+             repbi ~ b1*hete
+             repbi ~ b2*essui
+             repbi ~ b3*hete:essui
+         '
+fitmod1c <- sem(mod1c, data = elsoc_sub)
+summary(fitmod1c)
+```
+
+
+

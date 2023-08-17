@@ -39,8 +39,10 @@ class: middle
 # Contenidos de la presentación: 
 
 ###  I. Problema de investigación
-### II. Estado del arte, vacío y pregunta
+### II. Discusión teórica
 ### III. Método
+### IV. Resultados
+### V. Discusión
 
 ---
 

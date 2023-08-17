@@ -17,33 +17,55 @@ library(openxlsx)
 library(sjmisc)
 library(sjlabelled)
 library(scales)
+library(haven)
 ```
 
-```{r load-dataset}
+```{r import-dataset}
 getwd()
 remove(list = ls())
 
+#load datasets
 load(url("https://dataverse.harvard.edu/api/access/datafile/6160180")) #ola 5 2021
 load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #wide 2016-2022
-#load(url("https://dataverse.harvard.edu/api/access/datafile/7245113")) #long 2026-2022 (no funka link)
+load(url("https://dataverse.harvard.edu/api/access/datafile/7245118")) #long 2026-2022
 datos_terr <- readxl::read_excel("../1_input/data/original/dterr-w01-w04/BASE_2019_COD.xlsx")
+manzanas <- read_dta("../1_input/data/original/manzanas-confidencial/Manzanas_ELSOC2019_20200707.dta")
+theil <- read.csv("../1_input/data/original/segregation_theil.csv")
+```
 
+```{r merge-datasets}
+#selección varibales
 elsoc_2022 <- elsoc_wide_2016_2022.2 %>% 
-  select(idencuesta, estrato_disenno, segmento_disenno, c07_01_w05, m33_w05, m34_03_w03, ends_with("_w06"))
-  
-elsoc_terr <- dplyr::left_join(x = elsoc_2022, y = datos_terr, by = "idencuesta")
+  select(idencuesta, estrato_disenno, segmento_disenno, c07_01_w05, m33_w05, m34_03_w03, ends_with("_w06")) #selecciono de la ola 6 o, en su defecto, de la última ola medida
+
+#join datos 2022 y datos territoriales (2019) 
+elsoc_a <- dplyr::left_join(x = elsoc_2022, y = datos_terr, by = "idencuesta") 
+
+#join con id de manzanas reales
+manzanas$idencuesta <- as.numeric(manzanas$idencuesta) #cambio clase para hacer el siguiente join
+elsoc_b <- dplyr::left_join(x = elsoc_a, y = manzanas, by = "idencuesta") %>% 
+  select(idencuesta, estrato_disenno, segmento_disenno, segmento, manzana, cod_comuna, dist, zona, everything()) #reordeno variables vía select
+
+#join con índice de theil
+elsoc_b <- elsoc_b %>% 
+  mutate(cod_zona = str_sub(manzana, start = 1, -4)) #creo el id de las zonas censales a partir de las manzanas
+elsoc_b$cod_zona <- as.numeric(elsoc_b$cod_zona) #cambio clase para hacer el siguiente join
+theil <- theil %>% rename("cod_zona" = "geocodigo") #renombrar variable para posterior join
+elsoc_c <- dplyr::left_join(x = elsoc_b, y = theil, by = "cod_zona") %>% 
+  rename("hi_theil" = "Hi_final")
 ```
 
 ```{r clean-dataset}
 #selección de variables
-elsoc_gs <- elsoc_terr %>% 
+elsoc_gs <- elsoc_c %>% 
   filter(estrato_w06 == 1) %>% 
   dplyr::select(idencuesta, #id individual
-                estrato_disenno, segmento_disenno, comuna_w06, comuna_cod_w06, #id geográficos
+                estrato_disenno, comuna_w06, comuna_cod_w06, cod_comuna,dist, zona, cod_zona, segmento_disenno, segmento, manzana,  #id geográficos
                 starts_with("t02_"), starts_with("t03_"), t01_w06, t05_w06, c12_01_w06, c07_01_w05, # cohesión barrial
                 starts_with("t06_"), t08_w06, t10_w06, # mecanismos subjetivos 
-                jh_esc_sd, #segregación residencial
-                m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m33_w05, m34_03_w03) #controles 
+                jh_esc_sd, hi_theil, #segregación residencial
+                m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m33_w05, m34_03_w03) %>% #controles 
+  filter(comuna_cod_w06 > 11000) #dejar sólo casos que no se han ido de comunas del gran santiago en la medición de la ola 6
 
 #convertimos no sabe/no responde/no disponible/sin dato/no aplica a NA
 elsoc_gs[elsoc_gs == -888 | elsoc_gs == -999 | elsoc_gs == 994 | elsoc_gs == 995 | elsoc_gs == 996 | elsoc_gs == -666 | elsoc_gs == -777] <- NA
@@ -102,18 +124,18 @@ elsoc_gs <- elsoc_gs %>%
              jh_esc_sd = 'Heterogeneidad residencial',
              d01_01_w06 = 'Estatus social subjetivo')
 
-elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1
-
+elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1 #estatus subjetivo de 1 a 10 (no de 0 a 10)
 ```
 
 ```{r save-dataset}
-elsoc_barrio <- elsoc_gs %>% 
-  select(idencuesta, segmento_disenno, comuna_w06, comuna_cod_w06, #ids
+elsoc_gs_short <- elsoc_gs %>% 
+  select(idencuesta, comuna_w06, comuna_cod_w06, dist, zona, cod_zona, manzana, #ids
          apbi, apbr, soci, cnfi, jjvv, segu, segui=t10_w06, acci, repb, repbi=t08_w06 , #cohesión y mecanismos
-         sexo, edad, educ, essu, regi, time, #controles
-         hete=jh_esc_sd, essui=d01_01_w06) #
+         sexo, edad, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
+         hete=jh_esc_sd, hi_theil) #segregación
 
-save(elsoc_barrio, file = "../1_input/data/procesada/elsoc_barrio.RData")
+save(elsoc_gs, file = "../1_input/data/procesada/elsoc_gs.RData")
+save(elsoc_gs_short, file = "../1_input/data/procesada/elsoc_gs_short.RData")
 ```
 
 ```{r information}
