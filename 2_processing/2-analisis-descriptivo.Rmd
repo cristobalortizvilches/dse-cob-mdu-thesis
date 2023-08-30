@@ -8,29 +8,37 @@ output: html_document
 ```{r load-library}
 library(tidyverse)
 library(sjPlot)
+
+library(gstat)
+library(raster)
+library(rgdal)
+library(rworldxtra)
+library(sf)
+library(sp)
+library(chilemapas)
 ```
 
 
 ```{r load-dataset}
 getwd()
 remove(list = ls())
-load("../1_input/data/procesada/elsoc_entorno.RData")
+load("../1_input/data/procesada/elsoc_gs.RData")
+load("../1_input/data/procesada/elsoc_gs_short.RData")
 ```
 
 ```{r comunas-dataset}
 #Promedio por comuna
-apbi_comuna <-  elsoc_entorno %>%  
-  group_by(comuna = comuna.x) %>% 
+apbi_comuna <-  elsoc_gs_short %>%  
+  group_by(comuna = comuna) %>% 
   summarise(media = mean(apbi, na.rm = T),
             sd = sd(apbi, na.rm = T),
             n = n(),
             esco = mean(nived_com, na.rm = T))
-
 ```
 
 ```{r boxplot-comuna}
 boxplot_apbi <- 
-  elsoc_entorno %>% 
+  elsoc_gs_short %>% 
   drop_na() %>% 
   ggplot(aes(x = reorder(comuna.x, nived_com), y = apbi)) +
   geom_boxplot() +
@@ -47,7 +55,7 @@ ggsave(boxplot_apbi, filename= "../3_output/graficos/cap2/boxplot_apbi.png", wid
 
 ```{r Scatter SPB y Reputación por comuna}
 
-comuna_scat <- elsoc_entorno %>% 
+comuna_scat <- elsoc_gs_short %>% 
   group_by(comuna.x) %>% 
   select(apbi, soci, viol_zon, accs_zon, dens_zon) %>% 
   summarise_all(mean, na.rm = T)
@@ -65,9 +73,6 @@ ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
 scat_apbi_soci
 ```
 
-
-
-
 ```{r Scatter SPB y Nivel de Densidad Poblacional}
 scat_apbi_dens <- 
   plot_scatter(comuna_scat, dens_zon, apbi,
@@ -81,3 +86,55 @@ ggsave(scat_apbi_dens,filename= "../3_output/graficos/cap2/scat_apbi_dens.png")
 
 scat_apbi_dens
 ```
+
+# Análisis espacial
+
+```{r join-shapes}
+zonas_ams <- mapa_zonas %>% 
+  filter(codigo_region == 13) %>% 
+  rename("cod_zona" = "geocodigo") 
+
+zonas_ams$cod_zona <- as.numeric(zonas_ams$cod_zona)
+elsoc_ams <- dplyr::left_join(x = elsoc_gs_short, y = zonas_ams, by = "cod_zona") #sólo zonas con datos elsoc
+elsoc_ams2 <- dplyr::left_join(x = zonas_ams, y = elsoc_gs_short, by = "cod_zona") %>% #todas las zonas
+  filter(codigo_provincia == 131 | codigo_provincia == 132 | codigo_provincia == 134, #provincias ams excepto chacabuco
+         !codigo_comuna %in% c(13202, 13203, 13302, 13303, 13402, 13403, 13404)) #comunas fuera del ams
+
+elsoc_ams3 <- elsoc_ams2 %>% 
+  dplyr::select(idencuesta, cod_manz = manzana, cod_zona, cod_prov=codigo_provincia, cod_comuna=codigo_comuna, 
+                nombre_comuna=comuna_w06, cod_region=codigo_region, geometry, everything()) %>% 
+  dplyr::select(-c(zona, dist, comuna_cod_w06))
+```
+
+```{r plot-map-theil}
+plot_theil <- ggplot(data = elsoc_ams3) + 
+  geom_sf(aes(fill = hi_theil, geometry = geometry)) +
+  scale_fill_viridis_c(direction = -1) +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = " Segregación\n(índice de Theil)")
+plot_theil
+#ggsave(filename = "../3_output/graficos/map-theil.jpg", width = 15, height = 15, units = "cm")
+```
+
+```{r plot-map-apbi}
+plot_apbi <- ggplot(data = elsoc_ams3) + 
+  geom_sf(aes(fill = apbi, geometry = geometry)) +
+  scale_fill_viridis_c(direction = -1, option = "plasma") +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = "Indice de\napego barrial")
+plot_apbi
+#ggsave(filename = "../3_output/graficos/map-apbi.jpg", width = 15, height = 15, units = "cm")
+```
+```{r}
+save(elsoc_ams3, file = "../1_input/data/procesada/elsoc_ams.RData")
+write.csv(elsoc_ams3, "../1_input/data/procesada/elsoc_ams.csv", row.names=FALSE)
+```
+

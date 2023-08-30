@@ -48,7 +48,7 @@ load("../3_output/modelos/sem_models.RData")
 
 ```{r correlation}
 elsoc_sub <- elsoc_gs_short %>% 
-  select(idencuesta, apbi, soci, segui, repbi, acci, essui, educi, hete, hi_theil) %>% 
+  dplyr::select(idencuesta, apbi, soci, segui, repbi, acci, essui, educi, hete, hi_theil) %>% 
   drop_na()
 
 correl = cor(elsoc_sub)
@@ -277,52 +277,6 @@ save_png(plot_sem_high, "../3_output/graficos/sem_high.png")
 ```{r save-models}
 #save(fitsem_2, fitsem_low, fitsem_middle_low, fitsem_middle_high, fitsem_high, file = "../3_output/modelos/sem_models.RData")
 ```
-
-
-# Análisis espacial
-
-```{r join-shapes}
-library(chilemapas)
-
-zonas_ams <- mapa_zonas %>% 
-  filter(codigo_region == 13) %>% 
-  rename("cod_zona" = "geocodigo") 
-
-zonas_ams$cod_zona <- as.numeric(zonas_ams$cod_zona)
-elsoc_ams <- dplyr::left_join(x = elsoc_gs_short, y = zonas_ams, by = "cod_zona") #sólo zonas con datos elsoc
-elsoc_ams2 <- dplyr::left_join(x = zonas_ams, y = elsoc_gs_short, by = "cod_zona") %>% #todas las zonas
-  filter(codigo_provincia == 131 | codigo_provincia == 132 | codigo_provincia == 134, #provincias ams excepto chacabuco
-         !codigo_comuna %in% c(13202, 13203, 13302, 13303, 13402, 13403, 13404)) #comunas fuera del ams
-```
-
-```{r plot-map-theil}
-plot_theil <- ggplot(data = elsoc_ams2) + 
-  geom_sf(aes(fill = hi_theil, geometry = geometry)) +
-  scale_fill_viridis_c(direction = -1) +
-  theme_void() +
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  labs(fill = " Segregación\n(índice de Theil)")
-plot_theil
-ggsave(filename = "../3_output/graficos/map-theil.jpg", width = 15, height = 15, units = "cm")
-```
-
-```{r plot-map-apbi}
-plot_apbi <- ggplot(data = elsoc_ams2) + 
-  geom_sf(aes(fill = apbi, geometry = geometry)) +
-  scale_fill_viridis_c(direction = -1, option = "plasma") +
-  theme_void() +
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  labs(fill = "Indice de\napego barrial")
-plot_apbi
-ggsave(filename = "../3_output/graficos/map-apbi.jpg", width = 15, height = 15, units = "cm")
-```
-
 
 
 ----------------------------------------------------------------------------
