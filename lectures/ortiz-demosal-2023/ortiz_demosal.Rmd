@@ -1,6 +1,6 @@
 ---
 title: "¿Cómo se relaciona la desigualdad socioespacial y la cohesión barrial?:"
-subtitle: "el rol mediador de los mecanismos subjetivos anclados a la clase social"
+subtitle: "el rol de la subjetividad en los grupos socioeconómicos del Gran Santiago"
 author: "Cristóbal Ortiz Viches (PUC & COES)"
 date: "17/08/2023"
 output:
@@ -124,20 +124,13 @@ knitr::include_graphics('./img/blank_space.png')
 
 .text_100[Asistente de investigación COES] 
 
-<br>
-
-.text_100[Quentin Ramond, PhD. SciPo] 
-
-.text_100[Investigador adjunto COES] 
-
-<br>
 ]
 
 <br>
 
 ```{r echo=FALSE, out.width = '20%'}
 knitr::include_graphics('./img/blank_space.png')
-knitr::include_graphics('./img/ieut-logo2.jpg')
+knitr::include_graphics('./img/ieut-logo4.png')
 knitr::include_graphics('./img/blank_space.png')
 knitr::include_graphics('./img/coes-logo.png')
 knitr::include_graphics('./img/blank_space.png')

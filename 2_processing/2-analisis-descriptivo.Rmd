@@ -8,7 +8,6 @@ output: html_document
 ```{r load-library}
 library(tidyverse)
 library(sjPlot)
-
 library(gstat)
 library(raster)
 library(rgdal)
@@ -16,98 +15,332 @@ library(rworldxtra)
 library(sf)
 library(sp)
 library(chilemapas)
+library(mapview)
+library(viridis)
+library(elsoc)
+library(sjlabelled)
 ```
 
 
 ```{r load-dataset}
 getwd()
 remove(list = ls())
-load("../1_input/data/procesada/elsoc_gs.RData")
-load("../1_input/data/procesada/elsoc_gs_short.RData")
+load("../1_input/data/procesada/elsoc_ams.RData")
+load("../1_input/data/procesada/elsoc_ams_all.RData")
+
+load("../1_input/data/procesada/elsoc_ams_geo.RData")
+load("../1_input/data/procesada/elsoc_ams_all_geo.RData")
+
+load(url("https://dataverse.harvard.edu/api/access/datafile/7245118"))
+elsoc_long <- elsoc_long_2016_2022.2
 ```
 
-```{r comunas-dataset}
-#Promedio por comuna
-apbi_comuna <-  elsoc_gs_short %>%  
-  group_by(comuna = comuna) %>% 
-  summarise(media = mean(apbi, na.rm = T),
-            sd = sd(apbi, na.rm = T),
-            n = n(),
-            esco = mean(nived_com, na.rm = T))
-```
-
-```{r boxplot-comuna}
-boxplot_apbi <- 
-  elsoc_gs_short %>% 
-  drop_na() %>% 
-  ggplot(aes(x = reorder(comuna.x, nived_com), y = apbi)) +
-  geom_boxplot() +
-  coord_flip() +
-  theme(axis.text=element_text(size =  14),
-        axis.title=element_text(size = 16, face="bold")) + 
-  labs(x=" ", y = "Promedio de apego barrial por comuna")
-
-
-boxplot_apbi
-
-ggsave(boxplot_apbi, filename= "../3_output/graficos/cap2/boxplot_apbi.png", width = 10, height = 6)
-```
-
-```{r Scatter SPB y Reputación por comuna}
-
-comuna_scat <- elsoc_gs_short %>% 
-  group_by(comuna.x) %>% 
-  select(apbi, soci, viol_zon, accs_zon, dens_zon) %>% 
+```{r summarise-dataset, message=TRUE, warning=FALSE}
+prom_zonas <- elsoc_ams %>% 
+  group_by(cod_zona) %>% 
+  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, hi_theil, prom_ismt, ave_gse) %>% 
   summarise_all(mean, na.rm = T)
 
-scat_apbi_soci <- 
-  plot_scatter(comuna_scat,soci,apbi,
-            dot.labels = to_label(comuna_scat$comuna.x),
-            fit.line = "lm",
-            show.ci = TRUE,
-            title = "Gráfico de dispersión para los promedios apego y sociabilidad barrial agrupados por comuna",
-            axis.titles = c("Promedio de sociabilidad barrial por comuna","Promedio de apego barrial por comuna"))
+prom_zonas <- prom_zonas %>% 
+  mutate(educ =  factor(with(prom_zonas, case_when(educi <= 3 ~ 1,
+                                                   educi <= 5 ~ 2,
+                                                   educi <= 7 ~ 3, 
+                                                   educi <= 10 ~ 5)),
+                        labels = c('Básica','Media','Técnica', 'Universitaria')),
+         essu = factor(with(prom_zonas, case_when(essui <= 3 ~ 1,
+                                                  essui <= 5 ~ 2,
+                                                  essui <= 10 ~ 3)),
+                       labels = c('Bajo', 'Medio', 'Alto')))
 
-ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
+```
+# Análisis univariado
 
-scat_apbi_soci
+## Apego barrial
+
+```{r apego-olas}
+elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04), estrato == 1) %>% 
+  mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
+         spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
+         educ =  factor(car::recode(m01,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
+                       levels = c(1,2,3,4),
+                       labels = c('Básica','Media','Técnica', 'Universitaria'))) %>%
+  as_label(ola) %>% 
+  prop(x = spb_rec, by = ola, na.rm = TRUE) %>% 
+  ggplot(aes(y = prop, x = ola, fill = spb_rec, 
+             label = as.character(scales::percent(prop, accuracy = .1)))) + 
+  theme_bw() + 
+  geom_col(position = 'Stack') +
+  scale_fill_viridis_d(end = .85) +
+  geom_text(position = position_stack(vjust = .5),
+            size = 3, color = rep(c('white', 'white', 'black'), 5)) + 
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank()) +
+labs(x = NULL, y = NULL)
+```
+```{r apego-estrato}
+elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
+  mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
+         spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
+         estrato = factor(estrato, levels = c(1,2,3,4,5,6),
+                          labels = c('Gran\nSantiago', 'Gran\nValparaíso', 'Gran\nConcepción',
+                                     'Ciudades\ngrandes', 'Ciudades\nmedianas', 'Ciudades\npequeñas'))) %>% 
+  prop(x = spb_rec, by = c(ola, estrato), na.rm = TRUE) %>% 
+  as_label(ola) %>% 
+  filter(spb_rec == "Niveles altos") %>% 
+  ggplot(aes(y = prop, x = estrato, fill = ola, 
+             label = as.character(scales::percent(prop, accuracy = .1)))) + 
+  theme_bw() + 
+  geom_col(position = 'dodge2') +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0, 1)) +
+  scale_fill_viridis_d(begin = .22, end = .88, direction = -1) +
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank()) +
+  geom_text(vjust = -0.8,
+            position = position_dodge(width = .9),
+            size = 2.5) +
+  labs(x = NULL, y = NULL)
 ```
 
-```{r Scatter SPB y Nivel de Densidad Poblacional}
-scat_apbi_dens <- 
-  plot_scatter(comuna_scat, dens_zon, apbi,
-            dot.labels = to_label(comuna_scat$comuna.x),
-            fit.line = "lm",
-            show.ci = TRUE,
-            title = "Gráfico de dispersión para los promedios de apego al barrio y densidad zonal agrupados por Comuna",
-            axis.titles = c("Promedio de densidad poblacional por comuna","Promedio de apego barrial por comuna"))
+```{r apego-educ}
+elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04), estrato == 1) %>% 
+  mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
+         spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
+         educ =  factor(car::recode(m01,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
+                       levels = c(1,2,3,4),
+                       labels = c('Básica','Media','Técnica', 'Universitaria'))) %>%
+  as_label(ola) %>% 
+  prop(spb_rec == "Niveles altos", by = c(educ, ola), na.rm = TRUE) %>%  
+  drop_na() %>% 
+  ggplot(aes(y = prop, x = ola, color = educ, group = educ,
+             label = scales::percent(prop, .1))) +
+  geom_point(size = 1.75) + 
+  geom_line() +
+  theme_bw() +   
+  scale_color_viridis_d(begin = 0, end = .88, direction = -1) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  ggrepel::geom_text_repel(size = 3, nudge_y = .01)+
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank()) + 
+  labs(y = NULL, x = NULL, 
+       subtitle = 'Porcentaje con nivel alto de apego barrial')
+```
 
-ggsave(scat_apbi_dens,filename= "../3_output/graficos/cap2/scat_apbi_dens.png")
+## Sociabilidad barrial
 
-scat_apbi_dens
+```{r sociab-olas}
+elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t03_01, t03_02, t03_03, t03_04), estrato == 1) %>% 
+  mutate(soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
+         soci_rec = factor(cut(soci, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos"))) %>%
+  as_label(ola) %>% 
+  prop(x = soci_rec, by = ola, na.rm = TRUE) %>% 
+  ggplot(aes(y = prop, x = ola, fill = soci_rec, 
+             label = as.character(scales::percent(prop, accuracy = .1)))) + 
+  theme_bw() + 
+  geom_col(position = 'Stack') +
+  scale_fill_viridis_d(end = .85) +
+  geom_text(position = position_stack(vjust = .5),
+            size = 3, color = rep(c('white', 'white', 'black'), 5)) + 
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank()) +
+labs(x = NULL, y = NULL)
+```
+```{r sociab-estrato}
+elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
+  mutate(soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
+         soci_rec = factor(cut(soci, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
+         estrato = factor(estrato, levels = c(1,2,3,4,5,6),
+                          labels = c('Gran\nSantiago', 'Gran\nValparaíso', 'Gran\nConcepción',
+                                     'Ciudades\ngrandes', 'Ciudades\nmedianas', 'Ciudades\npequeñas'))) %>% 
+  prop(x = soci_rec, by = c(ola, estrato), na.rm = TRUE) %>% 
+  as_label(ola) %>% 
+  filter(soci_rec == "Niveles altos") %>% 
+  ggplot(aes(y = prop, x = estrato, fill = ola, 
+             label = as.character(scales::percent(prop, accuracy = .1)))) + 
+  theme_bw() + 
+  geom_col(position = 'dodge2') +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0, 1)) +
+  scale_fill_viridis_d(begin = .22, end = .88, direction = -1) +
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank()) +
+  geom_text(vjust = -0.8,
+            position = position_dodge(width = .9),
+            size = 2.5) +
+  labs(x = NULL, y = NULL)
+```
+
+```{r sociab-educ}
+elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04), estrato == 1) %>% 
+  mutate(soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
+         soci_rec = factor(cut(soci, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
+         educ =  factor(car::recode(m01,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
+                       levels = c(1,2,3,4),
+                       labels = c('Básica','Media','Técnica', 'Universitaria'))) %>%
+  as_label(ola) %>% 
+  prop(soci_rec == "Niveles altos", by = c(educ, ola), na.rm = TRUE) %>%  
+  drop_na() %>% 
+  ggplot(aes(y = prop, x = ola, color = educ, group = educ,
+             label = scales::percent(prop, .1))) +
+  geom_point(size = 1.75) + 
+  geom_line() +
+  theme_bw() +   
+  scale_color_viridis_d(begin = 0, end = .88, direction = -1) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  ggrepel::geom_text_repel(size = 3, nudge_y = .01)+
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank()) + 
+  labs(y = NULL, x = NULL, 
+       subtitle = 'Porcentaje con nivel alto de sociabilidad barrial')
+```
+
+
+# Análisis bivariado
+
+```{r boxplot}
+prom_gse <- elsoc_ams %>% 
+  group_by(ave_gse) %>% 
+  dplyr::select(apbi, soci) %>% 
+  summarise_all(mean, na.rm = T) %>% 
+  drop_na()
+
+elsoc_ams %>% 
+  ggplot(aes(x = ave_gse, y = apbi)) +
+  geom_boxplot() +
+  labs(x = "", y = "")
+
+elsoc_ams %>% 
+  ggplot(aes(x = ave_gse, y = soci)) +
+  geom_boxplot() +
+  labs(x = "", y = "")
+```
+
+```{r correlation}
+psych::pairs.panels(prom_zonas,
+             smooth = TRUE,      # If TRUE, draws loess smooths
+             scale = FALSE,      # If TRUE, scales the correlation text font
+             density = TRUE,     # If TRUE, adds density plots and histograms
+             ellipses = F,       # If TRUE, draws ellipses
+             method = "pearson", # Correlation method (also "spearman" or "kendall")
+             pch = 21,           # pch symbol
+             lm = TRUE,          # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
+             cor = TRUE,         # If TRUE, reports correlations
+             jiggle = FALSE,     # If TRUE, data points are jittered
+             factor = 2,         # Jittering factor
+             hist.col = 4,       # Histograms color
+             stars = TRUE,       # If TRUE, adds significance level with stars
+             ci = TRUE)          # If TRUE, adds confidence intervals
+```
+
+```{r scatt-segui-zona, message=FALSE, warning=FALSE}
+scat_apbi_segui <- prom_zonas %>% 
+  ggplot(aes(x = segui, y = apbi)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Promedio de seguridad barrial", 
+       y = "Promedio de apego barrial")
+
+scat_soci_segui <- prom_zonas %>% 
+  ggplot(aes(x = segui, y = soci)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Promedio de seguridad barrial", 
+       y = "Promedio de sociabilidad barrial")
+
+#ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
+
+scat_apbi_segui
+scat_soci_segui
+```
+
+```{r scatt-repbi-zona, message=FALSE, warning=FALSE}
+scat_apbi_repbi <- prom_zonas %>% 
+  ggplot(aes(x = repbi, y = apbi)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Promedio de reputación barrial", 
+       y = "Promedio de apego barrial")
+
+scat_soci_repbi <- prom_zonas %>% 
+  ggplot(aes(x = repbi, y = soci)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Promedio de reputación barrial", 
+       y = "Promedio de sociabilidad barrial")
+
+#ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
+
+scat_apbi_repbi
+scat_soci_repbi
+```
+
+```{r scatt-sacci-zona, message=FALSE, warning=FALSE}
+scat_apbi_sacci <- prom_zonas %>% 
+  ggplot(aes(x = sacci, y = apbi)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Promedio de satisfacción residencial", 
+       y = "Promedio de apego barrial")
+
+scat_soci_sacci <- prom_zonas %>% 
+  ggplot(aes(x = sacci, y = soci)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Promedio de satisfacción residencial", 
+       y = "Promedio de sociabilidad barrial")
+
+#ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
+
+scat_apbi_sacci
+scat_soci_sacci
+```
+
+```{r scatt-theil-zona, message=FALSE, warning=FALSE}
+scat_apbi_segr <- prom_zonas %>% 
+  ggplot(aes(x = hi_theil, y = apbi)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Nivel de segregación barrial", 
+       y = "Promedio de apego barrial")
+
+scat_soci_segr <- prom_zonas %>% 
+  ggplot(aes(x = hi_theil, y = soci)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Nivel de segregación barrial", 
+       y = "Promedio de sociabilidad barrial")
+
+#ggsave(scat_apbi_theil_educ, filename= "../3_output/graficos/scat_apbi_theil_educ.png")
+scat_apbi_segr
+scat_soci_segr
 ```
 
 # Análisis espacial
 
-```{r join-shapes}
-zonas_ams <- mapa_zonas %>% 
-  filter(codigo_region == 13) %>% 
-  rename("cod_zona" = "geocodigo") 
-
-zonas_ams$cod_zona <- as.numeric(zonas_ams$cod_zona)
-elsoc_ams <- dplyr::left_join(x = elsoc_gs_short, y = zonas_ams, by = "cod_zona") #sólo zonas con datos elsoc
-elsoc_ams2 <- dplyr::left_join(x = zonas_ams, y = elsoc_gs_short, by = "cod_zona") %>% #todas las zonas
-  filter(codigo_provincia == 131 | codigo_provincia == 132 | codigo_provincia == 134, #provincias ams excepto chacabuco
-         !codigo_comuna %in% c(13202, 13203, 13302, 13303, 13402, 13403, 13404)) #comunas fuera del ams
-
-elsoc_ams3 <- elsoc_ams2 %>% 
-  dplyr::select(idencuesta, cod_manz = manzana, cod_zona, cod_prov=codigo_provincia, cod_comuna=codigo_comuna, 
-                nombre_comuna=comuna_w06, cod_region=codigo_region, geometry, everything()) %>% 
-  dplyr::select(-c(zona, dist, comuna_cod_w06))
+```{r vis-gral, warning=FALSE}
+mapview(elsoc_ams_all_geo, zcol = "ave_gse")
 ```
 
 ```{r plot-map-theil}
-plot_theil <- ggplot(data = elsoc_ams3) + 
+plot_theil <- ggplot(data = elsoc_ams_all) + 
   geom_sf(aes(fill = hi_theil, geometry = geometry)) +
   scale_fill_viridis_c(direction = -1) +
   theme_void() +
@@ -121,7 +354,7 @@ plot_theil
 ```
 
 ```{r plot-map-apbi}
-plot_apbi <- ggplot(data = elsoc_ams3) + 
+plot_apbi <- ggplot(data = elsoc_ams_all) + 
   geom_sf(aes(fill = apbi, geometry = geometry)) +
   scale_fill_viridis_c(direction = -1, option = "plasma") +
   theme_void() +
@@ -133,8 +366,5 @@ plot_apbi <- ggplot(data = elsoc_ams3) +
 plot_apbi
 #ggsave(filename = "../3_output/graficos/map-apbi.jpg", width = 15, height = 15, units = "cm")
 ```
-```{r}
-save(elsoc_ams3, file = "../1_input/data/procesada/elsoc_ams.RData")
-write.csv(elsoc_ams3, "../1_input/data/procesada/elsoc_ams.csv", row.names=FALSE)
-```
+
 
