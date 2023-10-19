@@ -38,7 +38,7 @@ elsoc_long <- elsoc_long_2016_2022.2
 ```{r summarise-dataset, message=TRUE, warning=FALSE}
 prom_zonas <- elsoc_ams %>% 
   group_by(cod_zona) %>% 
-  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, hi_theil, prom_ismt, ave_gse) %>% 
+  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, ismtpn, gse_prom, gse_dom, ent_mean, ent_wgt, ave_jane) %>% 
   summarise_all(mean, na.rm = T)
 
 prom_zonas <- prom_zonas %>% 
@@ -55,7 +55,7 @@ prom_zonas <- prom_zonas %>%
 ```
 # Análisis univariado
 
-## Apego barrial
+## Univariado del apego barrial
 
 ```{r apego-olas}
 elsoc_long %>% 
@@ -135,7 +135,7 @@ elsoc_long %>%
        subtitle = 'Porcentaje con nivel alto de apego barrial')
 ```
 
-## Sociabilidad barrial
+## Univariado de la sociabilidad barrial
 
 ```{r sociab-olas}
 elsoc_long %>% 
@@ -215,20 +215,21 @@ elsoc_long %>%
 
 # Análisis bivariado
 
+## Bivariado a nivel individual
 ```{r boxplot}
 prom_gse <- elsoc_ams %>% 
-  group_by(ave_gse) %>% 
+  group_by(ent_wgt) %>% 
   dplyr::select(apbi, soci) %>% 
   summarise_all(mean, na.rm = T) %>% 
   drop_na()
 
 elsoc_ams %>% 
-  ggplot(aes(x = ave_gse, y = apbi)) +
+  ggplot(aes(x = ent_wgt, y = apbi)) +
   geom_boxplot() +
   labs(x = "", y = "")
 
 elsoc_ams %>% 
-  ggplot(aes(x = ave_gse, y = soci)) +
+  ggplot(aes(x = ent_wgt, y = soci)) +
   geom_boxplot() +
   labs(x = "", y = "")
 ```
@@ -249,6 +250,8 @@ psych::pairs.panels(prom_zonas,
              stars = TRUE,       # If TRUE, adds significance level with stars
              ci = TRUE)          # If TRUE, adds confidence intervals
 ```
+
+## Bivariado a nivel barrial (promedios por zona)
 
 ```{r scatt-segui-zona, message=FALSE, warning=FALSE}
 scat_apbi_segui <- prom_zonas %>% 
@@ -315,14 +318,14 @@ scat_soci_sacci
 
 ```{r scatt-theil-zona, message=FALSE, warning=FALSE}
 scat_apbi_segr <- prom_zonas %>% 
-  ggplot(aes(x = hi_theil, y = apbi)) +
+  ggplot(aes(x = ent_wgt, y = apbi)) +
   geom_point() +
   geom_smooth() +
   labs(x = "Nivel de segregación barrial", 
        y = "Promedio de apego barrial")
 
 scat_soci_segr <- prom_zonas %>% 
-  ggplot(aes(x = hi_theil, y = soci)) +
+  ggplot(aes(x = ent_wgt, y = soci)) +
   geom_point() +
   geom_smooth() +
   labs(x = "Nivel de segregación barrial", 
@@ -333,10 +336,30 @@ scat_apbi_segr
 scat_soci_segr
 ```
 
+```{r scatt-jane-zona, message=FALSE, warning=FALSE}
+scat_apbi_jane <- prom_zonas %>% 
+  ggplot(aes(x = ave_jane, y = apbi)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Nivel de vitalidad barrial", 
+       y = "Promedio de apego barrial")
+
+scat_soci_jane <- prom_zonas %>% 
+  ggplot(aes(x = ave_jane, y = soci)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Nivel de vitalidad barrial", 
+       y = "Promedio de sociabilidad barrial") 
+
+#ggsave(scat_apbi_theil_educ, filename= "../3_output/graficos/scat_apbi_theil_educ.png")
+scat_apbi_jane
+scat_soci_jane
+```
+
 # Análisis espacial
 
 ```{r vis-gral, warning=FALSE}
-mapview(elsoc_ams_all_geo, zcol = "ave_gse")
+mapview(elsoc_ams_all_geo, zcol = "soci")
 ```
 
 ```{r plot-map-theil}

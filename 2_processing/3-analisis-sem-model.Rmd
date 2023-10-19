@@ -43,7 +43,7 @@ load("../1_input/data/procesada/elsoc_ams.RData")
 
 elsoc_sub <- elsoc_ams %>% 
   dplyr::select(idencuesta, cod_zona, apbi, soci, segui, repbi, sacci, essui, educi, educ,
-                hete, segr, hi_theil, prom_ismt) %>% 
+                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean, ent_wgt, ave_jane) %>% 
   drop_na()
 ```
 
@@ -150,20 +150,29 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      apbi ~ b1*segui + b2*repbi + b3*sacci + c1*prom_ismt
-      segui ~ a1*prom_ismt
-      repbi ~ a2*prom_ismt
-      sacci ~ a3*prom_ismt
+      apbi ~ b1*segui + b2*repbi + b3*sacci + c1*ent_wgt + c2*ave_jane
+      segui ~ a1*ent_wgt
+      repbi ~ a2*ent_wgt
+      sacci ~ a3*ent_wgt
+      segui ~ a4*ave_jane
+      repbi ~ a5*ave_jane
+      sacci ~ a6*ave_jane
 
       # Efecto indirecto 
       ind_segr_segui_apbi := a1*b1
       ind_segr_repbi_apbi := a2*b2
       ind_segr_sacci_apbi := a3*b3
+      ind_jane_segui_apbi := a4*b1
+      ind_jane_repbi_apbi := a5*b2
+      ind_jane_sacci_apbi := a6*b3
 
       # Efecto total 
       tot_segr_segui_apbi := c1 + (a1*b1)
       tot_segr_repbi_apbi := c1 + (a2*b2)
       tot_segr_sacci_apbi := c1 + (a3*b3)
+      tot_segr_segui_apbi := c2 + (a4*b1)
+      tot_segr_repbi_apbi := c2 + (a5*b2)
+      tot_segr_sacci_apbi := c2 + (a6*b3)
 '
 
 fit_ml_sem_apbi <- sem(ml_sem_apbi, data = elsoc_sub, cluster = "cod_zona")
@@ -187,10 +196,10 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      soci ~ b1*segui + b2*repbi + b3*sacci + c1*prom_ismt
-      segui ~ a1*prom_ismt
-      repbi ~ a2*prom_ismt
-      sacci ~ a3*prom_ismt
+      soci ~ b1*segui + b2*repbi + b3*sacci + c1*ent_wgt + c2*ave_jane
+      segui ~ a1*ent_wgt
+      repbi ~ a2*ent_wgt
+      sacci ~ a3*ent_wgt
 
       # Efecto indirecto 
       ind_segr_segui_soci := a1*b1

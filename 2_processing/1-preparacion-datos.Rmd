@@ -20,6 +20,7 @@ library(scales)
 library(haven)
 library(sf)
 library(ismtchile)
+library(chilemapas)
 ```
 
 ```{r import-dataset}
@@ -33,7 +34,7 @@ load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #wide 201
 datos_terr <- readxl::read_excel("../1_input/data/original/dterr-w01-w04/BASE_2019_COD.xlsx")
 manzanas <- read_dta("../1_input/data/original/manzanas-confidencial/Manzanas_ELSOC2019_20200707.dta")
 theil <- read.csv("../1_input/data/original/segregation_theil.csv")
-ismt <- readxl::read_excel("../1_input/data/original/ismt.xlsx")
+ismt_jane <- readxl::read_excel("../1_input/data/original/ismt_jane.xlsx")
 ```
 
 ```{r merge-datasets}
@@ -57,11 +58,11 @@ theil <- theil %>% rename("cod_zona" = "geocodigo") #renombrar variable para pos
 elsoc_c <- dplyr::left_join(x = elsoc_b, y = theil, by = "cod_zona") %>% 
   rename("hi_theil" = "Hi_final")
 
-#join con ismt (y a futuro índice de jj)
+#join con ismt_jane (y a futuro índice de jj)
 
-ismt <- ismt %>% rename("cod_zona" = "geocodg") #renombrar variable para posterior join
-elsoc_d <- dplyr::left_join(x = elsoc_c, y = ismt, by = "cod_zona")
-
+ismt_jane <- ismt_jane %>% rename("cod_zona" = "GEOCODIGO") #renombrar variable para posterior join
+ismt_jane$cod_zona <- as.numeric(ismt_jane$cod_zona)
+elsoc_d <- dplyr::left_join(x = elsoc_c, y = ismt_jane, by = "cod_zona")
 ```
 
 ```{r clean-dataset}
@@ -72,7 +73,7 @@ elsoc_gs <- elsoc_d %>%
                 estrato_disenno, comuna_w06, comuna_cod_w06, cod_comuna,dist, zona, cod_zona, segmento_disenno, segmento, manzana,  #id geográficos
                 starts_with("t02_"), starts_with("t03_"), t01_w06, t05_w06, c12_01_w06, c07_01_w05, # cohesión barrial
                 starts_with("t06_"), t08_w06, t10_w06, # mecanismos subjetivos 
-                jh_esc_sd, hi_theil, prom_ismt, ave_gse = AVE_GSE, #segregación residencial
+                jh_esc_sd, hi_theil, ismtpn, gse_prom, gse_dom, ENTMEAN, ENTWGT, ave_jane = Ave_jan_nd, #desigualdad socioespacial
                 m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m33_w05, m34_03_w03) %>% #controles 
   filter(comuna_cod_w06 > 11000) #dejar sólo casos que no se han ido de comunas del gran santiago en la medición de la ola 6
 
@@ -143,7 +144,7 @@ elsoc_gs_short <- elsoc_gs %>%
   dplyr::select(idencuesta, comuna_w06, comuna_cod_w06, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
          apbi, apbr, soci, cnfi, jjvv, segu, segui=t10_w06, sacci, repb, repbi=t08_w06 , #cohesión y mecanismos
          sexo, edad, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
-         hete=jh_esc_sd, segr, hi_theil, prom_ismt, ave_gse) #segregación
+         hete=jh_esc_sd, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean = ENTMEAN, ent_wgt = ENTWGT, ave_jane) #segregación
 
 zonas_ams <- mapa_zonas %>% 
   filter(codigo_region == 13) %>% 
@@ -166,6 +167,7 @@ elsoc_ams_all <- elsoc_ams2 %>%
                 comuna, cod_region=codigo_region, geometry, everything())
 ```
 
+*Cambiar a proyectada*
 ```{r create-shapes}
 elsoc_ams_geo <- st_as_sf(x = elsoc_ams, sf_column_name = "geometry")
 elsoc_ams_all_geo <- st_as_sf(x = elsoc_ams_all, sf_column_name = "geometry")
