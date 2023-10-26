@@ -28,10 +28,9 @@ library(sjmisc)
 library(knitr)
 library(semTable)
 library(semptools)
-#devtools::install_github("dr-JT/semoutput")
+#devtools::install_github("dr-JT/semoutput") #de aquí sale sem_paths
 library(semoutput)
-
-
+library(stargazer)
 ```
 
 ```{r load-dataset-proc, include=FALSE}
@@ -42,8 +41,19 @@ load("../1_input/data/procesada/elsoc_ams.RData")
 #View(elsoc_sub)
 
 elsoc_sub <- elsoc_ams %>% 
-  dplyr::select(idencuesta, cod_zona, apbi, soci, segui, repbi, sacci, essui, educi, educ,
-                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean, ent_wgt, ave_jane) %>% 
+  dplyr::select(idencuesta, cod_zona, 
+                apbi, soci, 
+                segui, repbi, sacci, 
+                edadi, educi, essui, time, 
+                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean, ent_segr, ent_segr, ave_jane) %>% 
+  drop_na()
+
+elsoc_sub_gse <- elsoc_ams %>% 
+  dplyr::select(idencuesta, cod_zona, 
+                apbi, soci, 
+                segui, repbi, sacci, 
+                edadi, educi, educ, essui, time, 
+                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean, ent_segr, ent_segr, ave_jane) %>% 
   drop_na()
 ```
 
@@ -67,6 +77,11 @@ pairs.panels(elsoc_sub,
              hist.col = 4,       # Histograms color
              stars = TRUE,       # If TRUE, adds significance level with stars
              ci = TRUE)          # If TRUE, adds confidence intervals
+
+elsoc_sub %>%
+  dplyr::select(-idencuesta) %>% 
+  dplyr::select(-edadi, -educi, -essui, -time, -hete, -segr, -hi_theil, -ismtpn, -gse_prom, -gse_dom, -ent_mean, -ent_segr, -ent_segr, -ave_jane) %>%
+  mlmCorrs::icc.corrs(., group = "cod_zona")
 ```
 
 # Modelos de ecuaciones estructurales
@@ -125,23 +140,21 @@ save_png(plot_sem_ams, "../3_output/graficos/sem_ams.png")
 ```
 
 ```{r plot-sem2}
-plot_sem <- semPaths(fit_sem, whatLabels = "std",  layout = "tree2", rotation = 1, style = "lisrel", residuals = F, curve = 1, curvature = 3, 
-                     nCharNodes = 10, edge.label.cex = 1.15, sizeMan = 12, sizeMan2 = 4, optimizeLatRes = T, edge.color = "#000000")
+plot_sem <- semPaths(fit_sem, whatLabels = "std",  layout = "tree2", rotation = 1, style = "lisrel", residuals = F, curve = 1, curvature = 3, nCharNodes = 10, edge.label.cex = 1.15, sizeMan = 12, sizeMan2 = 4, optimizeLatRes = T, edge.color = "#000000")
 
 plot_sem_p <- mark_sig(plot_sem, fit_sem)
 plot(p_pa2)
 
 ```
 
-## Mediación Multinivel: Upper-level mediation (2-1-1)
 
-*Pendiente*: incluir variables de control sólo al nivel 1
+## Mediación Multinivel: upper-level mediation (2-1-1)
 
-```{r ml-sem-apbi, warning=FALSE}
-ml_sem_apbi <- '
+```{r msem-apbi, warning=FALSE}
+msem_apbi <- '
 level: 1
       # Modelo estructural nivel 1
-      apbi ~ b1*segui + b2*repbi + b3*sacci
+      apbi ~ b1*segui + b2*repbi + b3*sacci + b4*edadi + b5*educi + b6*essui + b7*time
 
       # Covarianzas
       segui ~~ repbi
@@ -150,44 +163,60 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      apbi ~ b1*segui + b2*repbi + b3*sacci + c1*ent_wgt + c2*ave_jane
-      segui ~ a1*ent_wgt
-      repbi ~ a2*ent_wgt
-      sacci ~ a3*ent_wgt
-      segui ~ a4*ave_jane
-      repbi ~ a5*ave_jane
-      sacci ~ a6*ave_jane
+      apbi ~ b1*segui + b2*repbi + b3*sacci + c1*ent_segr + c2*ave_jane
+      segui ~ a1*ent_segr
+      repbi ~ a2*ent_segr
+      repbi ~ a3*ave_jane
+      sacci ~ a4*ave_jane
+      
+      # Covarianzas
+      segui ~~ repbi
+      repbi ~~ sacci
+      segui ~~ sacci
 
       # Efecto indirecto 
       ind_segr_segui_apbi := a1*b1
       ind_segr_repbi_apbi := a2*b2
-      ind_segr_sacci_apbi := a3*b3
-      ind_jane_segui_apbi := a4*b1
-      ind_jane_repbi_apbi := a5*b2
-      ind_jane_sacci_apbi := a6*b3
+      ind_jane_repbi_apbi := a3*b2
+      ind_jane_sacci_apbi := a4*b3
 
       # Efecto total 
       tot_segr_segui_apbi := c1 + (a1*b1)
       tot_segr_repbi_apbi := c1 + (a2*b2)
-      tot_segr_sacci_apbi := c1 + (a3*b3)
-      tot_segr_segui_apbi := c2 + (a4*b1)
-      tot_segr_repbi_apbi := c2 + (a5*b2)
-      tot_segr_sacci_apbi := c2 + (a6*b3)
+      tot_jane_repbi_apbi := c2 + (a3*b2)
+      tot_jane_sacci_apbi := c2 + (a4*b3)
 '
 
-fit_ml_sem_apbi <- sem(ml_sem_apbi, data = elsoc_sub, cluster = "cod_zona")
-#fit_ml_sem <- sem(ml_sem_apbi, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
+fit_msem_apbi <- sem(msem_apbi, data = elsoc_sub, cluster = "cod_zona")
+#fit_msem <- sem(msem_apbi, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
 
-summary(fit_ml_sem_apbi, fit.measures = T)
-#lavInspect(fit_ml_sem_apbi, "icc")
-sem_paths(fit_ml_sem_apbi, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
+summary(fit_msem_apbi, fit.measures = T)
 ```
 
-```{r ml-sem-soci, warning=FALSE}
-ml_sem_soci <- '
+```{r msem-table-apbi}
+sem_table_apbi <- sem_paths(fit_msem_apbi, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
+sem_table_apbi %>% cat(., file = "../3_output/tablas/sem_table_apbi.doc")
+sem_table_apbi
+```
+
+```{r fit-measure-apbi}
+options(digits = 3)
+
+ajust_apbi <- fitMeasures(fit_msem_apbi, c("chisq", "cfi","rmsea","srmr")) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("measure")
+
+writexl::write_xlsx(ajust_apbi, path ="../3_output/tablas/ajust_table_apbi.xlsx")
+
+lavInspect(fit_msem_apbi, "icc")
+lavInspect(fit_msem_apbi, "r2")
+```
+
+```{r msem-soci, warning=FALSE}
+msem_soci <- '
 level: 1
       # Modelo estructural nivel 1
-      soci ~ b1*segui + b2*repbi + b3*sacci
+      soci ~ b1*segui + b2*repbi + b3*sacci + b4*edadi + b5*educi + b6*essui + b7*time
 
       # Covarianzas
       segui ~~ repbi
@@ -196,27 +225,48 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      soci ~ b1*segui + b2*repbi + b3*sacci + c1*ent_wgt + c2*ave_jane
-      segui ~ a1*ent_wgt
-      repbi ~ a2*ent_wgt
-      sacci ~ a3*ent_wgt
+      soci ~ b1*segui + b2*repbi + b3*sacci + c1*ent_segr + c2*ave_jane
+      segui ~ a1*ent_segr
+      repbi ~ a2*ent_segr
+      repbi ~ a3*ave_jane
+      sacci ~ a4*ave_jane
+      
+      # Covarianzas
+      segui ~~ repbi
+      repbi ~~ sacci
+      segui ~~ sacci
 
       # Efecto indirecto 
       ind_segr_segui_soci := a1*b1
       ind_segr_repbi_soci := a2*b2
-      ind_segr_sacci_soci := a3*b3
-
+      ind_jane_repbi_soci := a3*b2
+      ind_jane_sacci_soci := a4*b3
+      
       # Efecto total 
       tot_segr_segui_soci := c1 + (a1*b1)
       tot_segr_repbi_soci := c1 + (a2*b2)
-      tot_segr_sacci_soci := c1 + (a3*b3)
+      tot_jane_repbi_soci := c2 + (a3*b2)
+      tot_jane_sacci_soci := c2 + (a4*b3)
 '
 
-fit_ml_sem_soci <- sem(ml_sem_soci, data = elsoc_sub, cluster = "cod_zona")
-summary(fit_ml_sem_soci, fit.measures = T)
-lavInspect(fit_ml_sem_soci, "icc")
-sem_paths(fit_ml_sem_soci, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
+fit_msem_soci <- sem(msem_soci, data = elsoc_sub, cluster = "cod_zona")
+summary(fit_msem_soci, fit.measures = T)
+```
 
+```{r msem-table-soci}
+sem_table_soci <- sem_paths(fit_msem_soci, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
+sem_table_soci %>% cat(., file = "../3_output/tablas/sem_table_soci.doc")
+sem_table_soci
+```
+
+```{r fit-measure-soci}
+ajust_soci <- fitMeasures(fit_msem_soci, c("chisq", "cfi","rmsea","srmr")) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("measure")
+
+writexl::write_xlsx(ajust_soci, path ="../3_output/tablas/ajust_table_soci.xlsx")
+
+lavInspect(fit_msem_soci, "icc")
 ```
 
 
@@ -265,6 +315,30 @@ ggplot(elsoc_sub, aes(x = educi)) +
 
 ggsave(filename = "../3_output/graficos/dist_educ.jpg", width = 25, height = 15, units = "cm")
 ```
+
+### Con 'group'
+
+```{r sem-gse}
+sem_gse <- '
+# Modelo estructural
+apbi ~ b1*segui + b2*repbi + b3*sacci
+
+#Covarianzas
+segui ~~ repbi
+repbi ~~ sacci
+segui ~~ sacci
+'
+
+fit_sem_gse <- sem(sem_gse, data=elsoc_sub_gse, group = "educ")
+summary(fit_sem_gse, fit.measures=TRUE, standardized=TRUE)
+```
+
+```{r sem-table-gse}
+sem_table_gse <- sem_paths(fit_sem_gse, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
+sem_table_gse
+```
+
+### Con submuestra
 
 ```{r subset-class}
 quantile(elsoc_sub$educi)
@@ -325,7 +399,7 @@ save_png(plot_sem_high, "../3_output/graficos/sem_high.png")
 ```
 
 ```{r save-models}
-save(fit_sem, fit_sem_low, fit_sem_middle_low, fit_sem_middle_high, fit_sem_high, fit_ml_sem, file = "../3_output/modelos/sem_models.RData")
+save(fit_sem, fit_sem_low, fit_sem_middle_low, fit_sem_middle_high, fit_sem_high, fit_msem, file = "../3_output/modelos/sem_models.RData")
 ```
 
 

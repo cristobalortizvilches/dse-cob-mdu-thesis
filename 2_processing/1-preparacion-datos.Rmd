@@ -105,12 +105,14 @@ elsoc_gs <- elsoc_gs %>%
                                         "Positiva")),
   #-----Recode X: desigualdad socio espacial
          segr = ((jh_esc_sd - max(jh_esc_sd, na.rm = T)) * -1) + min(jh_esc_sd, na.rm = T),
+         ent_segr = ((ENTWGT - max(ENTWGT, na.rm = T)) * -1) + min(ENTWGT, na.rm = T),
   #-----Recode controles socio-demográficas
          sexo = factor(m0_sexo_w06, labels = c('Hombre', 'Mujer')),
          edad = factor(car::recode(m0_edad_w06, "18:29=1; 30:49=2; 50:64=3; 65:150=4"),
                        labels = c('18-29', '30-49', '50-64', '65 o más')),
          educ = factor(car::recode(m01_w06,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
-                       labels = c("Básica", "Media", "Técnica", "Universitaria")),
+                       labels = c("Básica", "Media", "Técnica", "Universitaria"),
+                       levels = c(1,2,3,4)),
          essu = factor(car::recode(d01_01_w06, "c(6,7,8,9,10)=1; c(4,5)=2; c(0,1,2,3)=3"),
                       labels = c("Alto", "Medio", "Bajo")),
          regi = factor(car::recode(m33_w05, "1:2=1;3:7=2"),
@@ -143,8 +145,8 @@ elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1 #estatus subjetivo de 1 a 10 
 elsoc_gs_short <- elsoc_gs %>% 
   dplyr::select(idencuesta, comuna_w06, comuna_cod_w06, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
          apbi, apbr, soci, cnfi, jjvv, segu, segui=t10_w06, sacci, repb, repbi=t08_w06 , #cohesión y mecanismos
-         sexo, edad, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
-         hete=jh_esc_sd, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean = ENTMEAN, ent_wgt = ENTWGT, ave_jane) #segregación
+         sexo, edad, edadi=m0_edad_w06, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
+         hete=jh_esc_sd, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean = ENTMEAN, ent_wgt = ENTWGT, ent_segr, ave_jane) #segregación
 
 zonas_ams <- mapa_zonas %>% 
   filter(codigo_region == 13) %>% 

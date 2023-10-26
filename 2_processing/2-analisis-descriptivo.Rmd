@@ -23,7 +23,6 @@ library(sjlabelled)
 
 
 ```{r load-dataset}
-getwd()
 remove(list = ls())
 load("../1_input/data/procesada/elsoc_ams.RData")
 load("../1_input/data/procesada/elsoc_ams_all.RData")
@@ -38,19 +37,21 @@ elsoc_long <- elsoc_long_2016_2022.2
 ```{r summarise-dataset, message=TRUE, warning=FALSE}
 prom_zonas <- elsoc_ams %>% 
   group_by(cod_zona) %>% 
-  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, ismtpn, gse_prom, gse_dom, ent_mean, ent_wgt, ave_jane) %>% 
+  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, ismtpn, gse_prom, gse_dom, hi_theil, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
   summarise_all(mean, na.rm = T)
 
 prom_zonas <- prom_zonas %>% 
   mutate(educ =  factor(with(prom_zonas, case_when(educi <= 3 ~ 1,
                                                    educi <= 5 ~ 2,
                                                    educi <= 7 ~ 3, 
-                                                   educi <= 10 ~ 5)),
-                        labels = c('Básica','Media','Técnica', 'Universitaria')),
+                                                   educi <= 10 ~ 4)),
+                        labels = c('Básica','Media','Técnica', 'Universitaria'),
+                        levels = c(1,2,3,4)),
          essu = factor(with(prom_zonas, case_when(essui <= 3 ~ 1,
                                                   essui <= 5 ~ 2,
                                                   essui <= 10 ~ 3)),
-                       labels = c('Bajo', 'Medio', 'Alto')))
+                       labels = c('Bajo', 'Medio', 'Alto'),
+                       levels = c(1,2,3)))
 
 ```
 # Análisis univariado
@@ -80,6 +81,7 @@ elsoc_long %>%
         legend.title = element_blank()) +
 labs(x = NULL, y = NULL)
 ```
+
 ```{r apego-estrato}
 elsoc_long %>% 
   filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
@@ -218,18 +220,18 @@ elsoc_long %>%
 ## Bivariado a nivel individual
 ```{r boxplot}
 prom_gse <- elsoc_ams %>% 
-  group_by(ent_wgt) %>% 
+  group_by(ent_segr) %>% 
   dplyr::select(apbi, soci) %>% 
   summarise_all(mean, na.rm = T) %>% 
   drop_na()
 
 elsoc_ams %>% 
-  ggplot(aes(x = ent_wgt, y = apbi)) +
+  ggplot(aes(x = ent_segr, y = apbi)) +
   geom_boxplot() +
   labs(x = "", y = "")
 
 elsoc_ams %>% 
-  ggplot(aes(x = ent_wgt, y = soci)) +
+  ggplot(aes(x = ent_segr, y = soci)) +
   geom_boxplot() +
   labs(x = "", y = "")
 ```
@@ -316,19 +318,19 @@ scat_apbi_sacci
 scat_soci_sacci
 ```
 
-```{r scatt-theil-zona, message=FALSE, warning=FALSE}
+```{r scatt-segr-zona, message=FALSE, warning=FALSE}
 scat_apbi_segr <- prom_zonas %>% 
-  ggplot(aes(x = ent_wgt, y = apbi)) +
+  ggplot(aes(x = ent_segr, y = apbi, color = educ)) +
   geom_point() +
   geom_smooth() +
-  labs(x = "Nivel de segregación barrial", 
-       y = "Promedio de apego barrial")
+  labs(x = "Nivel de segregación residencial", 
+       y = "Promedio de pertenencia barrial")
 
 scat_soci_segr <- prom_zonas %>% 
-  ggplot(aes(x = ent_wgt, y = soci)) +
+  ggplot(aes(x = ent_segr, y = soci, color = educ)) +
   geom_point() +
   geom_smooth() +
-  labs(x = "Nivel de segregación barrial", 
+  labs(x = "Nivel de segregación residencial", 
        y = "Promedio de sociabilidad barrial")
 
 #ggsave(scat_apbi_theil_educ, filename= "../3_output/graficos/scat_apbi_theil_educ.png")
@@ -341,14 +343,14 @@ scat_apbi_jane <- prom_zonas %>%
   ggplot(aes(x = ave_jane, y = apbi)) +
   geom_point() +
   geom_smooth() +
-  labs(x = "Nivel de vitalidad barrial", 
+  labs(x = "Nivel de vitalidad del entorno", 
        y = "Promedio de apego barrial")
 
 scat_soci_jane <- prom_zonas %>% 
   ggplot(aes(x = ave_jane, y = soci)) +
   geom_point() +
   geom_smooth() +
-  labs(x = "Nivel de vitalidad barrial", 
+  labs(x = "Nivel de vitalidad del entorno", 
        y = "Promedio de sociabilidad barrial") 
 
 #ggsave(scat_apbi_theil_educ, filename= "../3_output/graficos/scat_apbi_theil_educ.png")
