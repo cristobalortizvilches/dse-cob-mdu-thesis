@@ -36,6 +36,8 @@ manzanas <- read_dta("../1_input/data/original/manzanas-confidencial/Manzanas_EL
 theil <- read.csv("../1_input/data/original/segregation_theil.csv")
 ismt_jane <- readxl::read_excel("../1_input/data/original/ismt_jane.xlsx")
 ```
+c12_01
+c07_01
 
 ```{r merge-datasets}
 #selección varibales
@@ -91,8 +93,7 @@ elsoc_gs <- elsoc_gs %>%
                            labels = c('Muy Bajo', 'Bajo', 'Medio', 'Alto')),
          soci = (t03_01_w06 + t03_02_w06 + t03_03_w06 + t03_04_w06)/4,
          cnfi = t01_w06,
-         jjvv = factor(car::recode(c12_01_w06, "1=1;2:3=2"),
-                           labels = c('No miembro','Miembro')),
+         comi = (c07_01_w05 + c12_01_w06),
   #-----Recode M: mecanismos subjetivos 
          segu = factor(car::recode(t10_w06, "1:2=1;3=2;4:5=3"),
                            labels = c("Baja",
@@ -123,7 +124,7 @@ elsoc_gs <- elsoc_gs %>%
              apbr = "Apego Barrial",
              soci = "Sociabilidad barrial",
              cnfi = "Confianza en vecinos",
-             jjvv = "Membresía junta vecinal",
+             comi = "Compromiso cívico",
              segu = 'Seguridad barrial',
              t10_w06 = 'Seguridad barrial',
              sacci = 'Satisfacción residencial',
@@ -144,7 +145,7 @@ elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1 #estatus subjetivo de 1 a 10 
 ```{r join-espacial}
 elsoc_gs_short <- elsoc_gs %>% 
   dplyr::select(idencuesta, comuna_w06, comuna_cod_w06, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
-         apbi, apbr, soci, cnfi, jjvv, segu, segui=t10_w06, sacci, repb, repbi=t08_w06 , #cohesión y mecanismos
+         apbi, apbr, soci, cnfi, comi, segu, segui=t10_w06, sacci, repb, repbi=t08_w06 , #cohesión y mecanismos
          sexo, edad, edadi=m0_edad_w06, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
          hete=jh_esc_sd, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean = ENTMEAN, ent_wgt = ENTWGT, ent_segr, ave_jane) #segregación
 

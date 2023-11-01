@@ -54,6 +54,16 @@ prom_zonas <- prom_zonas %>%
                        levels = c(1,2,3)))
 
 ```
+# Descriptivo general
+
+```{r}
+elsoc_ams2 <- elsoc_ams %>% 
+  dplyr::select(-geometry)
+
+summarytools::dfSummary(elsoc_ams2, style = "grid")
+```
+
+
 # Análisis univariado
 
 ## Univariado del apego barrial
