@@ -180,7 +180,7 @@ writexl::write_xlsx(ajust_soci, path ="../3_output/tablas/ajust_table_soci.xlsx"
 lavInspect(fit_msem_soci, "icc")
 ```
 
-```{r coef-table}
+```{r coef-df}
 coef_apbi <-
   broom::tidy(fit_msem_apbi, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>% 
@@ -240,7 +240,7 @@ coef_plot <- coef_msem %>%
        y = "Coeficientes estandarizados") +
   scale_x_discrete(limits = rev) 
 
-coef_plot
+coef_plot 
 
 ggsave(coef_plot,filename = "../3_output/graficos/coef_plot.png", width = 10, height = 7)
 ```
@@ -302,6 +302,7 @@ sem_soci <- '
 ```
 
 ```{r msem-apbi-soci-2, warning=FALSE}
+# Mismo modelo 2-1-1 pero sin nivel educacional
 msem_apbi2 <- '
 level: 1
       # Modelo estructural nivel 1
@@ -466,28 +467,28 @@ writexl::write_xlsx(high_ajust_soci, path ="../3_output/tablas/gse_tables/high_a
 coef_apbi_low <-
   broom::tidy(fit_sem_apbi_low, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>% 
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2", "ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
   data_frame(class = c(rep("Bajo"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high) 
 
 coef_apbi_midlow <-
   broom::tidy(fit_sem_apbi_midlow, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
   data_frame(class = c(rep("Medio Bajo"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
 coef_apbi_midhigh <-
   broom::tidy(fit_sem_apbi_midhigh, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
   data_frame(class = c(rep("Medio alto"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
 coef_apbi_high <-
   broom::tidy(fit_sem_apbi_high, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
   data_frame(class = c(rep("Alto"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
@@ -498,28 +499,28 @@ coef_apbi_class <- rbind(coef_apbi_low, coef_apbi_midlow, coef_apbi_midhigh, coe
 coef_soci_low <-
   broom::tidy(fit_sem_soci_low, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
   data_frame(class = c(rep("Bajo"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
 coef_soci_midlow <-
   broom::tidy(fit_sem_soci_midlow, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
   data_frame(class = c(rep("Medio Bajo"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
 coef_soci_midhigh <-
   broom::tidy(fit_sem_soci_midhigh, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%   
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
   data_frame(class = c(rep("Medio alto"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
 coef_soci_high <-
   broom::tidy(fit_sem_soci_high, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
+  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
   data_frame(class = c(rep("Alto"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
@@ -538,6 +539,10 @@ coef_class <- coef_class %>%
                        "soci ~ repbi" = "Reputación",
                        "apbi ~ sacci" = "Satisfacción",
                        "soci ~ sacci" = "Satisfacción",
+                       "apbi ~ ent_segr" = "Segregación",
+                       "soci ~ ent_segr" = "Segregación",
+                       "apbi ~ ave_jane" = "Vitalidad",
+                       "soci ~ ave_jane" = "Vitalidad",
                        "ind_segr_segui_apbi := a1*b1" = "Segregación ~\nSeguridad",
                        "ind_segr_segui_soci := a1*b1" = "Segregación ~\nSeguridad",
                        "ind_segr_repbi_apbi := a2*b2" = "Segregación ~\nReputación",
@@ -548,7 +553,7 @@ coef_class <- coef_class %>%
                        "ind_jane_sacci_soci := a4*b3" = "Vitalidad ~\nSatisfacción"))
 
 coef_plot_gse <- coef_class %>% 
-  ggplot(aes(x = factor(term, levels = c('Seguridad', 'Reputación', 'Satisfacción', 
+  ggplot(aes(x = factor(term, levels = c('Seguridad', 'Reputación', 'Satisfacción', 'Segregación', 'Vitalidad',
                                          'Segregación ~\nSeguridad', 'Segregación ~\nReputación',
                                          'Vitalidad ~\nReputación', 'Vitalidad ~\nSatisfacción')), 
            y = estimate, 

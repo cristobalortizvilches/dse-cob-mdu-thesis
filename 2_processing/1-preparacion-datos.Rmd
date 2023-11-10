@@ -172,8 +172,10 @@ elsoc_ams_all <- elsoc_ams2 %>%
 
 *Cambiar a proyectada*
 ```{r create-shapes}
-elsoc_ams_geo <- st_as_sf(x = elsoc_ams, sf_column_name = "geometry")
-elsoc_ams_all_geo <- st_as_sf(x = elsoc_ams_all, sf_column_name = "geometry")
+elsoc_ams_geo <- st_as_sf(x = elsoc_ams, sf_column_name = "geometry") %>% 
+  st_transform(31979)
+elsoc_ams_all_geo <- st_as_sf(x = elsoc_ams_all, sf_column_name = "geometry") %>% 
+  st_transform(31979)
 ```
 
 
