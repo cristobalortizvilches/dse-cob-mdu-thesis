@@ -55,7 +55,7 @@ prom_zonas <- prom_zonas %>%
 ```
 # Descriptivo general
 
-```{r desc-}
+```{r desc-table}
 elsoc_ams2 <- elsoc_ams %>% 
   dplyr::select(-geometry)
 
@@ -384,8 +384,15 @@ scat_soci_jane
 
 # Análisis espacial
 
-```{r vis-gral, warning=FALSE}
-mapview(elsoc_ams_all_geo, zcol = "soci")
+```{r mapa-gral, warning=FALSE}
+pal = 
+
+map_apbi <- mapview(elsoc_ams_all_geo, zcol = "apbr", layer.name = "Nivel de pertenencia", col.regions = mapviewPalette("mapviewRasterColors"), map.types = "CartoDB.VoyagerNoLabels")
+
+mapshot(map_apbi, file = "../3_output/graficos/map_apbi.png", width = 10, height = 15)
+
+mapview(elsoc_ams_all_geo, zcol = "hi_theil", ap.types = "CartoDB.VoyagerNoLabels")
+
 ```
 
 ```{r plot-map-theil}

@@ -45,7 +45,7 @@ elsoc_sub <- elsoc_ams %>%
                 apbi, soci, 
                 segui, repbi, sacci, 
                 edadi, educi, essui, time, 
-                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
+                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, prom_ismt, ave_gse, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
   drop_na()
 
 elsoc_sub_gse <- elsoc_ams %>% 
@@ -53,8 +53,9 @@ elsoc_sub_gse <- elsoc_ams %>%
                 apbi, soci, 
                 segui, repbi, sacci, 
                 edadi, educi, educ, essui, time, 
-                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
+                hete, segr, hi_theil, ismtpn, gse_prom, gse_dom, prom_ismt, ave_gse, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
   drop_na()
+
 ```
 
 # Modelos de ecuaciones estructurales (análisis de senderos multinivel)
@@ -84,7 +85,8 @@ level: 2
       segui ~~ repbi
       repbi ~~ sacci
       segui ~~ sacci
-
+      ent_segr ~~ ave_jane
+     
       # Efecto indirecto 
       ind_segr_segui_apbi := a1*b1
       ind_segr_repbi_apbi := a2*b2
@@ -101,7 +103,7 @@ level: 2
 #fit_msem_apbi <- sem(msem_apbi, data = elsoc_sub, cluster = "cod_zona")
 #fit_msem <- sem(msem_apbi, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
 
-summary(fit_msem_apbi, fit.measures = T)
+#summary(fit_msem_apbi, fit.measures = T)
 ```
 
 ```{r msem-table-apbi}
@@ -146,7 +148,8 @@ level: 2
       segui ~~ repbi
       repbi ~~ sacci
       segui ~~ sacci
-
+      ent_segr ~~ ave_jane
+     
       # Efecto indirecto 
       ind_segr_segui_soci := a1*b1
       ind_segr_repbi_soci := a2*b2
@@ -161,7 +164,7 @@ level: 2
 '
 
 #fit_msem_soci <- sem(msem_soci, data = elsoc_sub, cluster = "cod_zona")
-summary(fit_msem_soci, fit.measures = T)
+#summary(fit_msem_soci, fit.measures = T)
 ```
 
 ```{r msem-table-soci}
@@ -245,60 +248,20 @@ coef_plot
 ggsave(coef_plot,filename = "../3_output/graficos/coef_plot.png", width = 10, height = 7)
 ```
 
-## Mediación multinivel por grupos socioeconómicos (msem 2-1-1)
-
+## Mediación multinivel por GSE (2-1-1)
 
 ```{r subset-class}
-quantile(elsoc_sub$educi)
-#  0%  25%  50%  75% 100% 
-#  1    4    5    7   10 
-
 #subset para 0%-25%
-elsoc_low <- elsoc_sub %>% 
-  filter(educi <= quantile(elsoc_sub$educi)[2]) %>% 
-  dplyr::select(-educi)
+elsoc_low <- elsoc_sub %>%
+  filter(ave_gse == "D")
 
 #subset para 25%-50%
 elsoc_middle_low <- elsoc_sub %>% 
-  filter((educi >= quantile (elsoc_sub$educi)[2] &
-            educi <= quantile(elsoc_sub$educi)[3])) %>% 
-  dplyr::select(-educi)
+  filter(ave_gse == "C2")
 
 #subset para 50%-75%
 elsoc_middle_high <- elsoc_sub %>% 
-  filter((educi > quantile (elsoc_sub$educi)[3] &
-            educi <= quantile(elsoc_sub$educi)[4])) %>% 
-  dplyr::select(-educi)
-
-#subset para 75%-100%
-elsoc_high <- elsoc_sub %>% 
-  filter(educi > quantile (elsoc_sub$educi)[4]) %>% 
-  dplyr::select(-educi)
-```
-
-
-```{r sem-apbi-soci}
-sem_apbi <- '
-      # Modelo estructural nivel 1
-      apbi ~ b1*segui + b2*repbi + b3*sacci + b4*edadi + b5*time
-
-      # Covarianzas
-      segui ~~ repbi
-      repbi ~~ sacci
-      segui ~~ sacci
-      edadi ~~ time
-      '
-
-sem_soci <- '
-      # Modelo estructural nivel 1
-      soci ~ b1*segui + b2*repbi + b3*sacci + b4*edadi + b5*time
-
-      # Covarianzas
-      segui ~~ repbi
-      repbi ~~ sacci
-      segui ~~ sacci
-      edadi ~~ time
-      '
+  filter(ave_gse %in% c("C2", "ABC1"))
 ```
 
 ```{r msem-apbi-soci-2, warning=FALSE}
@@ -325,7 +288,8 @@ level: 2
       segui ~~ repbi
       repbi ~~ sacci
       segui ~~ sacci
-
+      ent_segr ~~ ave_jane
+     
       # Efecto indirecto 
       ind_segr_segui_apbi := a1*b1
       ind_segr_repbi_apbi := a2*b2
@@ -364,7 +328,8 @@ level: 2
       segui ~~ repbi
       repbi ~~ sacci
       segui ~~ sacci
-
+      ent_segr ~~ ave_jane
+     
       # Efecto indirecto 
       ind_segr_segui_soci := a1*b1
       ind_segr_repbi_soci := a2*b2
@@ -382,11 +347,11 @@ level: 2
 #summary(fit_msem_soci, fit.measures = T)
 ```
 
-```{r msem-low, warning=FALSE}
-#fit_sem_apbi_low <- sem(msem_apbi2, data = elsoc_low, cluster = "cod_zona",
-#                        verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
-#fit_sem_soci_low <- sem(msem_soci2, data = elsoc_low, cluster = "cod_zona",
-#                        verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
+```{r msem-low, message=FALSE, warning=FALSE}
+fit_sem_apbi_low <- sem(msem_apbi2, data = elsoc_low, cluster = "cod_zona",
+                        verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
+fit_sem_soci_low <- sem(msem_soci2, data = elsoc_low, cluster = "cod_zona",
+                        verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
 
 summary(fit_sem_apbi_low, fit.measures = F, standardized = TRUE)
 summary(fit_sem_soci_low, fit.measures = F, standardized = TRUE)
@@ -400,13 +365,13 @@ low_table_soci <- sem_paths(fit_sem_soci_low, standardized = TRUE, ci = "standar
 low_table_soci %>% cat(., file = "../3_output/tablas/gse_tables/low_table_soci.doc")
 low_ajust_soci <- fitMeasures(fit_sem_soci_low, c("chisq", "cfi","rmsea","srmr")) %>% as.data.frame() %>% rownames_to_column("measure")
 writexl::write_xlsx(low_ajust_soci, path ="../3_output/tablas/gse_tables/low_ajust_soci.xlsx")
-
 ```
 
-```{r msem-middle-low, warning=FALSE}
-#fit_sem_apbi_midlow <- sem(msem_apbi2, data = elsoc_middle_low, cluster = "cod_zona")
-#fit_sem_soci_midlow <- sem(msem_soci2, data = elsoc_middle_low, cluster = "cod_zona",
-#                           verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
+```{r msem-middle-low, message=FALSE, warning=FALSE}
+fit_sem_apbi_midlow <- sem(msem_apbi2, data = elsoc_middle_low, cluster = "cod_zona",
+                           verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
+fit_sem_soci_midlow <- sem(msem_soci2, data = elsoc_middle_low, cluster = "cod_zona",
+                           verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
 
 summary(fit_sem_apbi_midlow, fit.measures = F, standardized = TRUE)
 summary(fit_sem_soci_midlow, fit.measures = F, standardized = TRUE)
@@ -423,10 +388,10 @@ writexl::write_xlsx(midlow_ajust_soci, path ="../3_output/tablas/gse_tables/midl
 ```
 
 ```{r msem-middle-high, warning=FALSE}
-#fit_sem_apbi_midhigh <- sem(msem_apbi2, data = elsoc_middle_high, cluster = "cod_zona", 
-#                            verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
-#fit_sem_soci_midhigh <- sem(msem_soci2, data = elsoc_middle_high, cluster = "cod_zona",
-#                            verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
+fit_sem_apbi_midhigh <- sem(msem_apbi2, data = elsoc_middle_high, cluster = "cod_zona", 
+                            verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
+fit_sem_soci_midhigh <- sem(msem_soci2, data = elsoc_middle_high, cluster = "cod_zona",
+                            verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
 
 summary(fit_sem_apbi_midhigh, fit.measures = F, standardized = TRUE) #dont end normally
 summary(fit_sem_soci_midhigh, fit.measures = F, standardized = TRUE) #dont end normally
@@ -442,26 +407,6 @@ midhigh_ajust_soci <- fitMeasures(fit_sem_soci_midhigh, c("chisq", "cfi","rmsea"
 writexl::write_xlsx(midhigh_ajust_soci, path ="../3_output/tablas/gse_tables/midhigh_ajust_soci.xlsx")
 ```
 
-```{r msem-high, warning=FALSE}
-#fit_sem_apbi_high <- sem(msem_apbi2, data = elsoc_high, cluster = "cod_zona",
-#                         verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
-fit_sem_soci_high <- sem(msem_soci2, data = elsoc_high, cluster = "cod_zona",
-                         verbose = TRUE, optim.method = "em", em.iter.max = 20000,  em.fx.tol = 1e-08, em.dx.tol = 1e-04)
-
-summary(fit_sem_apbi_high, fit.measures = F, standardized = TRUE) #dont end normally
-summary(fit_sem_soci_high, fit.measures = F, standardized = TRUE)
-
-high_table_apbi <- sem_paths(fit_sem_apbi_high, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
-high_table_apbi %>% cat(., file = "../3_output/tablas/gse_tables/high_table_apbi.doc")
-high_ajust_apbi <- fitMeasures(fit_sem_apbi_high, c("chisq", "cfi","rmsea","srmr")) %>% as.data.frame() %>% rownames_to_column("measure")
-writexl::write_xlsx(high_ajust_apbi, path ="../3_output/tablas/gse_tables/high_ajust_apbi.xlsx")
-
-high_table_soci <- sem_paths(fit_sem_soci_high, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
-high_table_soci %>% cat(., file = "../3_output/tablas/gse_tables/high_table_soci.doc")
-high_ajust_soci <- fitMeasures(fit_sem_soci_high, c("chisq", "cfi","rmsea","srmr")) %>% as.data.frame() %>% rownames_to_column("measure")
-writexl::write_xlsx(high_ajust_soci, path ="../3_output/tablas/gse_tables/high_ajust_soci.xlsx")
-```
-
 ```{r coef-df-gse, warning=FALSE}
 #apbi
 coef_apbi_low <-
@@ -475,25 +420,16 @@ coef_apbi_midlow <-
   broom::tidy(fit_sem_apbi_midlow, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
   filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
-  data_frame(class = c(rep("Medio Bajo"))) %>% 
+  data_frame(class = c(rep("Medio"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
 coef_apbi_midhigh <-
   broom::tidy(fit_sem_apbi_midhigh, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
   filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
-  data_frame(class = c(rep("Medio alto"))) %>% 
-  dplyr::select(class, term, estimate, conf.low, conf.high)
-
-coef_apbi_high <-
-  broom::tidy(fit_sem_apbi_high, conf.int = TRUE, conf.level = 0.95) %>%
-  filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_apbi", "ind_segr_repbi_apbi", "ind_jane_repbi_apbi", "ind_jane_sacci_apbi")) %>% 
   data_frame(class = c(rep("Alto"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
-coef_apbi_class <- rbind(coef_apbi_low, coef_apbi_midlow, coef_apbi_midhigh, coef_apbi_high) %>% 
-  data_frame(var = c(rep("Pertenencia")))
 
 # soci
 coef_soci_low <-
@@ -507,24 +443,22 @@ coef_soci_midlow <-
   broom::tidy(fit_sem_soci_midlow, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%    
   filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
-  data_frame(class = c(rep("Medio Bajo"))) %>% 
+  data_frame(class = c(rep("Medio"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
 coef_soci_midhigh <-
   broom::tidy(fit_sem_soci_midhigh, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>%   
   filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
-  data_frame(class = c(rep("Medio alto"))) %>% 
-  dplyr::select(class, term, estimate, conf.low, conf.high)
-
-coef_soci_high <-
-  broom::tidy(fit_sem_soci_high, conf.int = TRUE, conf.level = 0.95) %>%
-  filter(!level == 1) %>%    
-  filter(label %in% c("b1", "b2", "b3", "c1", "c2","ind_segr_segui_soci", "ind_segr_repbi_soci", "ind_jane_repbi_soci", "ind_jane_sacci_soci")) %>% 
   data_frame(class = c(rep("Alto"))) %>% 
   dplyr::select(class, term, estimate, conf.low, conf.high)
 
-coef_soci_class <- rbind(coef_soci_low, coef_soci_midlow, coef_soci_midhigh, coef_soci_high) %>% 
+# merge
+
+coef_apbi_class <- rbind(coef_apbi_low, coef_apbi_midlow, coef_apbi_midhigh) %>% 
+  data_frame(var = c(rep("Pertenencia")))
+
+coef_soci_class <- rbind(coef_soci_low, coef_soci_midlow, coef_soci_midhigh) %>% 
   data_frame(var = c(rep("Sociabilidad")))
 
 coef_class <- rbind(coef_apbi_class, coef_soci_class)
@@ -557,7 +491,7 @@ coef_plot_gse <- coef_class %>%
                                          'Segregación ~\nSeguridad', 'Segregación ~\nReputación',
                                          'Vitalidad ~\nReputación', 'Vitalidad ~\nSatisfacción')), 
            y = estimate, 
-           shape = factor(class, levels = c('Alto', 'Medio alto', 'Medio Bajo', 'Bajo')))) +
+           shape = factor(class, levels = c('Alto', 'Medio', 'Bajo')))) +
   geom_hline(yintercept = 0, color = 'red') +
   geom_point(position = position_dodge(width = -0.6), size = 3) +
   geom_linerange(aes(ymin = conf.low, ymax = conf.high),
@@ -579,7 +513,7 @@ ggsave(coef_plot_gse,filename = "../3_output/graficos/coef_plot_gse.png", width 
 ```
 
 ```{r save-models}
-save(fit_msem_apbi, fit_sem_apbi_low, fit_sem_apbi_midlow, fit_sem_apbi_midhigh, fit_sem_apbi_high,
-     fit_msem_soci, fit_sem_soci_low, fit_sem_soci_midlow, fit_sem_soci_midhigh, fit_sem_soci_high,
+save(fit_msem_apbi, fit_sem_apbi_low, fit_sem_apbi_midlow, fit_sem_apbi_midhigh,
+     fit_msem_soci, fit_sem_soci_low, fit_sem_soci_midlow, fit_sem_soci_midhigh,
      file = "../3_output/modelos/sem_models.RData")
 ```
