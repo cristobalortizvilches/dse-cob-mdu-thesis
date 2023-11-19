@@ -36,7 +36,7 @@ elsoc_long <- elsoc_long_2016_2022.2
 ```{r summarise-dataset, message=TRUE, warning=FALSE}
 prom_zonas <- elsoc_ams %>% 
   group_by(cod_zona) %>% 
-  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, ismtpn, gse_prom, gse_dom, hi_theil, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
+  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, ismtpn, ave_gse, hi_theil, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
   summarise_all(mean, na.rm = T)
 
 prom_zonas <- prom_zonas %>% 
@@ -385,7 +385,11 @@ scat_soci_jane
 # Análisis espacial
 
 ```{r mapa-gral, warning=FALSE}
-pal = 
+elsoc_ams_all_geo %>%  
+  group_by(cod_zona) %>% 
+  summarise(n_encuestas = n(),
+            prom_apbi = mean(apbi, na.rm = TRUE)) %>%  
+  ungroup()
 
 map_apbi <- mapview(elsoc_ams_all_geo, zcol = "apbr", layer.name = "Nivel de pertenencia", col.regions = mapviewPalette("mapviewRasterColors"), map.types = "CartoDB.VoyagerNoLabels")
 

@@ -33,9 +33,9 @@ load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #wide 201
 #load(url("https://dataverse.harvard.edu/api/access/datafile/7245118")) #long 2026-2022
 datos_terr <- readxl::read_excel("../1_input/data/original/dterr-w01-w04/BASE_2019_COD.xlsx")
 manzanas <- read_dta("../1_input/data/original/manzanas-confidencial/Manzanas_ELSOC2019_20200707.dta")
-theil <- read.csv("../1_input/data/original/segregation_theil.csv")
-jane <- readxl::read_excel("../1_input/data/original/ismt_jane.xlsx")
-ismt <- readxl::read_excel("../1_input/data/original/ismt.xlsx")
+theil <- read.csv("../1_input/data/original/otros/segregation_theil.csv")
+ismt_jane <- readxl::read_excel("../1_input/data/original/ocuc-ismt/ismt_jane.xlsx")
+ismt_aim <- readxl::read_excel("../1_input/data/original/ocuc-ismt/ismt_aim.xlsx")
 ```
 
 ```{r merge-datasets}
@@ -61,14 +61,14 @@ elsoc_c <- dplyr::left_join(x = elsoc_b, y = theil, by = "cod_zona") %>%
 
 #join con ismt con jane y elsoc
 
-jane <- jane %>% rename("cod_zona" = "GEOCODIGO") #renombrar variable para posterior join
-jane$cod_zona <- as.numeric(jane$cod_zona)
-ismt <- ismt %>% rename("cod_zona" = "geocode")
-ismt$cod_zona <- as.numeric(ismt$cod_zona)
+ismt_jane <- ismt_jane %>% rename("cod_zona" = "GEOCODIGO") #renombrar variable para posterior join
+ismt_jane$cod_zona <- as.numeric(ismt_jane$cod_zona)
+ismt_aim <- ismt_aim %>% rename("cod_zona" = "GEOCODIGO")
+ismt_aim$cod_zona <- as.numeric(ismt_aim$cod_zona)
 
-ismt_jane <- dplyr::left_join(x = ismt, y = jane, by = "cod_zona")
+ismt_all <- dplyr::left_join(x = ismt_aim, y = ismt_jane, by = "cod_zona")
 
-elsoc_d <- dplyr::left_join(x = elsoc_c, y = ismt_jane, by = "cod_zona")
+elsoc_d <- dplyr::left_join(x = elsoc_c, y = ismt_all, by = "cod_zona")
 ```
 
 ```{r clean-dataset}
@@ -79,7 +79,7 @@ elsoc_gs <- elsoc_d %>%
                 estrato_disenno, comuna_w06, comuna_cod_w06, cod_comuna,dist, zona, cod_zona, segmento_disenno, segmento, manzana,  #id geográficos
                 starts_with("t02_"), starts_with("t03_"), t01_w06, t05_w06, c12_01_w06, c07_01_w05, # cohesión barrial
                 starts_with("t06_"), t08_w06, t10_w06, # mecanismos subjetivos 
-                jh_esc_sd, hi_theil, ismtpn, prom_ismt, gse_prom, gse_dom, ave_gse = AVE_GSE, ENTMEAN, ENTWGT, ave_jane = Ave_jan_nd, #desigualdad socioespacial
+                jh_esc_sd, hi_theil, ismtpn = ismtpn.x, ave_gse = AIM_CON, ENTMEAN, ENTWGT, ave_jane = Ave_jan_nd, #desigualdad socioespacial
                 m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m33_w05, m34_03_w03) %>% #controles 
   filter(comuna_cod_w06 > 11000) #dejar sólo casos que no se han ido de comunas del gran santiago en la medición de la ola 6
 
@@ -158,7 +158,7 @@ elsoc_gs_short <- elsoc_gs %>%
   dplyr::select(idencuesta, comuna_w06, comuna_cod_w06, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
          apbi, apbr, soci, socr, cnfi, comi, segu, segui=t10_w06, sacci, repb, repbi=t08_w06 , #cohesión y mecanismos
          sexo, edad, edadi=m0_edad_w06, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
-         hete=jh_esc_sd, segr, hi_theil, ismtpn,  gse_prom, gse_dom, prom_ismt, ave_gse, ent_mean = ENTMEAN, ent_wgt = ENTWGT, ent_segr, ave_jane) #segregación
+         theil_pola=hi_theil, ismt_rank=ismtpn, gse_zona = ave_gse, ent_mean=ENTMEAN, theil_mixt=ENTWGT, theil_segr=ent_segr, jane_indx=ave_jane) #desigualdad
 
 zonas_ams <- mapa_zonas %>% 
   filter(codigo_region == 13) %>% 
@@ -191,14 +191,17 @@ elsoc_ams_all_geo <- st_as_sf(x = elsoc_ams_all, sf_column_name = "geometry") %>
 
 
 ```{r save-dataset, warning=FALSE}
-save(elsoc_ams, file = "../1_input/data/procesada/elsoc_ams.RData")
-save(elsoc_ams_all, file = "../1_input/data/procesada/elsoc_ams_all.RData")
+# df para msem 
+save(elsoc_ams, file = "../1_input/data/procesada/elsoc_ams.RData") #zonas elsoc
+save(elsoc_ams_all, file = "../1_input/data/procesada/elsoc_ams_all.RData") #zonas ams
 
-save(elsoc_ams_geo, file = "../1_input/data/procesada/elsoc_ams_geo.RData")
-save(elsoc_ams_all_geo, file = "../1_input/data/procesada/elsoc_ams_all_geo.RData")
+# df con coordenadas geográficas
+save(elsoc_ams_geo, file = "../1_input/data/procesada/elsoc_ams_geo.RData") #zonas elsoc
+save(elsoc_ams_all_geo, file = "../1_input/data/procesada/elsoc_ams_all_geo.RData") #zonas ams
 
-st_write(elsoc_ams_geo, dsn = "../1_input/data/procesada/shapes/elsoc_ams_geo.shp", delete_layer = TRUE)
-st_write(elsoc_ams_all_geo, dsn = "../1_input/data/procesada/shapes/elsoc_ams_all_geo.shp", delete_layer = TRUE)
+# df formato shapefile 
+st_write(elsoc_ams_geo, dsn = "../1_input/data/procesada/shapes/elsoc_ams_geo.shp", delete_layer = TRUE) #zonas elsoc
+st_write(elsoc_ams_all_geo, dsn = "../1_input/data/procesada/shapes/elsoc_ams_all_geo.shp", delete_layer = TRUE) #zonas ams
 ```
 
 ```{r information}

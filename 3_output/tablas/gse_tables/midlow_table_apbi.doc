@@ -21,232 +21,232 @@
   <tr>
    <td style="text-align:left;"> segui </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.074 </td>
-   <td style="text-align:right;"> 0.103 </td>
-   <td style="text-align:right;"> 0.716 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.474 </td>
-   <td style="text-align:left;"> -0.128 - 0.275 </td>
+   <td style="text-align:right;"> 0.200 </td>
+   <td style="text-align:right;"> 0.068 </td>
+   <td style="text-align:right;"> 2.950 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:right;"> 0.003 </td>
+   <td style="text-align:left;"> 0.067 - 0.334 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> repbi </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.329 </td>
-   <td style="text-align:right;"> 0.134 </td>
-   <td style="text-align:right;"> 2.450 </td>
-   <td style="text-align:left;"> * </td>
-   <td style="text-align:right;"> 0.014 </td>
-   <td style="text-align:left;"> 0.066 - 0.592 </td>
+   <td style="text-align:right;"> 0.281 </td>
+   <td style="text-align:right;"> 0.069 </td>
+   <td style="text-align:right;"> 4.087 </td>
+   <td style="text-align:left;"> *** </td>
+   <td style="text-align:right;"> 0.000 </td>
+   <td style="text-align:left;"> 0.146 - 0.416 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sacci </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.197 </td>
-   <td style="text-align:right;"> 0.095 </td>
-   <td style="text-align:right;"> 2.075 </td>
-   <td style="text-align:left;"> * </td>
-   <td style="text-align:right;"> 0.038 </td>
-   <td style="text-align:left;"> 0.011 - 0.383 </td>
+   <td style="text-align:right;"> 0.105 </td>
+   <td style="text-align:right;"> 0.072 </td>
+   <td style="text-align:right;"> 1.463 </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:right;"> 0.144 </td>
+   <td style="text-align:left;"> -0.036 - 0.245 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> edadi </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.034 </td>
-   <td style="text-align:right;"> 0.112 </td>
-   <td style="text-align:right;"> 0.304 </td>
+   <td style="text-align:right;"> 0.127 </td>
+   <td style="text-align:right;"> 0.070 </td>
+   <td style="text-align:right;"> 1.823 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.761 </td>
-   <td style="text-align:left;"> -0.185 - 0.253 </td>
+   <td style="text-align:right;"> 0.068 </td>
+   <td style="text-align:left;"> -0.01 - 0.263 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> essui </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> -0.137 </td>
-   <td style="text-align:right;"> 0.100 </td>
-   <td style="text-align:right;"> -1.374 </td>
+   <td style="text-align:right;"> 0.014 </td>
+   <td style="text-align:right;"> 0.063 </td>
+   <td style="text-align:right;"> 0.227 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.169 </td>
-   <td style="text-align:left;"> -0.332 - 0.058 </td>
+   <td style="text-align:right;"> 0.821 </td>
+   <td style="text-align:left;"> -0.109 - 0.137 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> time </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.207 </td>
-   <td style="text-align:right;"> 0.110 </td>
-   <td style="text-align:right;"> 1.876 </td>
+   <td style="text-align:right;"> 0.008 </td>
+   <td style="text-align:right;"> 0.070 </td>
+   <td style="text-align:right;"> 0.116 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.061 </td>
-   <td style="text-align:left;"> -0.009 - 0.424 </td>
+   <td style="text-align:right;"> 0.908 </td>
+   <td style="text-align:left;"> -0.129 - 0.145 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> segui </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.201 </td>
-   <td style="text-align:right;"> 0.530 </td>
-   <td style="text-align:right;"> 0.378 </td>
+   <td style="text-align:right;"> 0.115 </td>
+   <td style="text-align:right;"> 0.115 </td>
+   <td style="text-align:right;"> 1.000 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.705 </td>
-   <td style="text-align:left;"> -0.838 - 1.239 </td>
+   <td style="text-align:right;"> 0.317 </td>
+   <td style="text-align:left;"> -0.11 - 0.34 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> repbi </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.448 </td>
-   <td style="text-align:right;"> 1.053 </td>
-   <td style="text-align:right;"> 0.426 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.670 </td>
-   <td style="text-align:left;"> -1.616 - 2.512 </td>
+   <td style="text-align:right;"> 0.256 </td>
+   <td style="text-align:right;"> 0.118 </td>
+   <td style="text-align:right;"> 2.166 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:right;"> 0.030 </td>
+   <td style="text-align:left;"> 0.024 - 0.488 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sacci </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.637 </td>
-   <td style="text-align:right;"> 1.349 </td>
-   <td style="text-align:right;"> 0.472 </td>
+   <td style="text-align:right;"> 0.086 </td>
+   <td style="text-align:right;"> 0.080 </td>
+   <td style="text-align:right;"> 1.066 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.637 </td>
-   <td style="text-align:left;"> -2.008 - 3.281 </td>
+   <td style="text-align:right;"> 0.286 </td>
+   <td style="text-align:left;"> -0.072 - 0.243 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ent_segr </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> -0.709 </td>
-   <td style="text-align:right;"> 1.703 </td>
-   <td style="text-align:right;"> -0.416 </td>
+   <td style="text-align:right;"> -0.181 </td>
+   <td style="text-align:right;"> 0.211 </td>
+   <td style="text-align:right;"> -0.855 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.677 </td>
-   <td style="text-align:left;"> -4.047 - 2.629 </td>
+   <td style="text-align:right;"> 0.393 </td>
+   <td style="text-align:left;"> -0.595 - 0.233 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ave_jane </td>
    <td style="text-align:left;"> apbi </td>
-   <td style="text-align:right;"> 0.496 </td>
-   <td style="text-align:right;"> 1.371 </td>
-   <td style="text-align:right;"> 0.362 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.718 </td>
-   <td style="text-align:left;"> -2.191 - 3.184 </td>
+   <td style="text-align:right;"> 0.519 </td>
+   <td style="text-align:right;"> 0.245 </td>
+   <td style="text-align:right;"> 2.116 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:right;"> 0.034 </td>
+   <td style="text-align:left;"> 0.038 - 0.999 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ent_segr </td>
    <td style="text-align:left;"> segui </td>
-   <td style="text-align:right;"> 0.408 </td>
-   <td style="text-align:right;"> 0.219 </td>
-   <td style="text-align:right;"> 1.861 </td>
+   <td style="text-align:right;"> 0.132 </td>
+   <td style="text-align:right;"> 0.395 </td>
+   <td style="text-align:right;"> 0.335 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.063 </td>
-   <td style="text-align:left;"> -0.022 - 0.837 </td>
+   <td style="text-align:right;"> 0.738 </td>
+   <td style="text-align:left;"> -0.641 - 0.905 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ent_segr </td>
    <td style="text-align:left;"> repbi </td>
-   <td style="text-align:right;"> 0.600 </td>
-   <td style="text-align:right;"> 2.519 </td>
-   <td style="text-align:right;"> 0.238 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.812 </td>
-   <td style="text-align:left;"> -4.338 - 5.538 </td>
+   <td style="text-align:right;"> -0.626 </td>
+   <td style="text-align:right;"> 0.284 </td>
+   <td style="text-align:right;"> -2.202 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:right;"> 0.028 </td>
+   <td style="text-align:left;"> -1.184 - -0.069 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ave_jane </td>
    <td style="text-align:left;"> repbi </td>
-   <td style="text-align:right;"> -0.765 </td>
-   <td style="text-align:right;"> 3.133 </td>
-   <td style="text-align:right;"> -0.244 </td>
+   <td style="text-align:right;"> -0.025 </td>
+   <td style="text-align:right;"> 0.276 </td>
+   <td style="text-align:right;"> -0.089 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.807 </td>
-   <td style="text-align:left;"> -6.906 - 5.376 </td>
+   <td style="text-align:right;"> 0.929 </td>
+   <td style="text-align:left;"> -0.566 - 0.517 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ave_jane </td>
    <td style="text-align:left;"> sacci </td>
-   <td style="text-align:right;"> 0.223 </td>
-   <td style="text-align:right;"> 0.214 </td>
-   <td style="text-align:right;"> 1.043 </td>
+   <td style="text-align:right;"> 0.590 </td>
+   <td style="text-align:right;"> 0.367 </td>
+   <td style="text-align:right;"> 1.609 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.297 </td>
-   <td style="text-align:left;"> -0.196 - 0.643 </td>
+   <td style="text-align:right;"> 0.108 </td>
+   <td style="text-align:left;"> -0.129 - 1.309 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> a1*b1 </td>
    <td style="text-align:left;"> ind_segr_segui_apbi </td>
-   <td style="text-align:right;"> 0.030 </td>
-   <td style="text-align:right;"> 0.045 </td>
-   <td style="text-align:right;"> 0.673 </td>
+   <td style="text-align:right;"> 0.026 </td>
+   <td style="text-align:right;"> 0.080 </td>
+   <td style="text-align:right;"> 0.332 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.501 </td>
-   <td style="text-align:left;"> -0.057 - 0.117 </td>
+   <td style="text-align:right;"> 0.740 </td>
+   <td style="text-align:left;"> -0.13 - 0.183 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> a2*b2 </td>
    <td style="text-align:left;"> ind_segr_repbi_apbi </td>
-   <td style="text-align:right;"> 0.197 </td>
-   <td style="text-align:right;"> 0.878 </td>
-   <td style="text-align:right;"> 0.225 </td>
+   <td style="text-align:right;"> -0.176 </td>
+   <td style="text-align:right;"> 0.093 </td>
+   <td style="text-align:right;"> -1.896 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.822 </td>
-   <td style="text-align:left;"> -1.525 - 1.919 </td>
+   <td style="text-align:right;"> 0.058 </td>
+   <td style="text-align:left;"> -0.358 - 0.006 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> a3*b2 </td>
    <td style="text-align:left;"> ind_jane_repbi_apbi </td>
-   <td style="text-align:right;"> -0.252 </td>
-   <td style="text-align:right;"> 1.095 </td>
-   <td style="text-align:right;"> -0.230 </td>
+   <td style="text-align:right;"> -0.007 </td>
+   <td style="text-align:right;"> 0.078 </td>
+   <td style="text-align:right;"> -0.089 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.818 </td>
-   <td style="text-align:left;"> -2.397 - 1.894 </td>
+   <td style="text-align:right;"> 0.929 </td>
+   <td style="text-align:left;"> -0.159 - 0.145 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> a4*b3 </td>
    <td style="text-align:left;"> ind_jane_sacci_apbi </td>
-   <td style="text-align:right;"> 0.044 </td>
-   <td style="text-align:right;"> 0.045 </td>
-   <td style="text-align:right;"> 0.982 </td>
+   <td style="text-align:right;"> 0.062 </td>
+   <td style="text-align:right;"> 0.058 </td>
+   <td style="text-align:right;"> 1.061 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.326 </td>
-   <td style="text-align:left;"> -0.044 - 0.132 </td>
+   <td style="text-align:right;"> 0.289 </td>
+   <td style="text-align:left;"> -0.052 - 0.176 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> c1+(a1*b1) </td>
    <td style="text-align:left;"> tot_segr_segui_apbi </td>
-   <td style="text-align:right;"> -0.679 </td>
-   <td style="text-align:right;"> 1.707 </td>
-   <td style="text-align:right;"> -0.398 </td>
+   <td style="text-align:right;"> -0.154 </td>
+   <td style="text-align:right;"> 0.224 </td>
+   <td style="text-align:right;"> -0.688 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.691 </td>
-   <td style="text-align:left;"> -4.024 - 2.667 </td>
+   <td style="text-align:right;"> 0.491 </td>
+   <td style="text-align:left;"> -0.593 - 0.285 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> c1+(a2*b2) </td>
    <td style="text-align:left;"> tot_segr_repbi_apbi </td>
-   <td style="text-align:right;"> -0.511 </td>
-   <td style="text-align:right;"> 1.032 </td>
-   <td style="text-align:right;"> -0.495 </td>
+   <td style="text-align:right;"> -0.357 </td>
+   <td style="text-align:right;"> 0.224 </td>
+   <td style="text-align:right;"> -1.590 </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.620 </td>
-   <td style="text-align:left;"> -2.535 - 1.512 </td>
+   <td style="text-align:right;"> 0.112 </td>
+   <td style="text-align:left;"> -0.796 - 0.083 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> c2+(a3*b2) </td>
    <td style="text-align:left;"> tot_jane_repbi_apbi </td>
-   <td style="text-align:right;"> 0.244 </td>
-   <td style="text-align:right;"> 0.898 </td>
-   <td style="text-align:right;"> 0.272 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.785 </td>
-   <td style="text-align:left;"> -1.515 - 2.004 </td>
+   <td style="text-align:right;"> 0.512 </td>
+   <td style="text-align:right;"> 0.250 </td>
+   <td style="text-align:right;"> 2.051 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:right;"> 0.040 </td>
+   <td style="text-align:left;"> 0.023 - 1.001 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> c2+(a4*b3) </td>
    <td style="text-align:left;"> tot_jane_sacci_apbi </td>
-   <td style="text-align:right;"> 0.540 </td>
-   <td style="text-align:right;"> 1.371 </td>
-   <td style="text-align:right;"> 0.394 </td>
-   <td style="text-align:left;">  </td>
-   <td style="text-align:right;"> 0.694 </td>
-   <td style="text-align:left;"> -2.148 - 3.228 </td>
+   <td style="text-align:right;"> 0.581 </td>
+   <td style="text-align:right;"> 0.243 </td>
+   <td style="text-align:right;"> 2.389 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:right;"> 0.017 </td>
+   <td style="text-align:left;"> 0.104 - 1.057 </td>
   </tr>
 </tbody>
 </table>
