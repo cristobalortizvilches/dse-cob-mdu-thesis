@@ -34,23 +34,21 @@ elsoc_long <- elsoc_long_2016_2022.2
 ```
 
 ```{r summarise-dataset, message=TRUE, warning=FALSE}
-prom_zonas <- elsoc_ams %>% 
+elsoc_mean_zonas <- elsoc_ams %>% 
   group_by(cod_zona) %>% 
-  dplyr::select(apbi, soci, segui, repbi, sacci, educi, essui, hete, segr, ismtpn, ave_gse, hi_theil, ent_mean, ent_wgt, ent_segr, ave_jane) %>% 
+  dplyr::select(idencuesta, cod_zona, 
+                apbi, soci, 
+                segui, repbi, sacci, 
+                edadi, educi, essui, time,  
+                theil_pola, ismt_rank, theil_mixt, theil_segr, jane_indx) %>% 
   summarise_all(mean, na.rm = T)
 
-prom_zonas <- prom_zonas %>% 
-  mutate(educ =  factor(with(prom_zonas, case_when(educi <= 3 ~ 1,
-                                                   educi <= 5 ~ 2,
-                                                   educi <= 7 ~ 3, 
-                                                   educi <= 10 ~ 4)),
-                        labels = c('Básica','Media','Técnica', 'Universitaria'),
-                        levels = c(1,2,3,4)),
-         essu = factor(with(prom_zonas, case_when(essui <= 3 ~ 1,
-                                                  essui <= 5 ~ 2,
-                                                  essui <= 10 ~ 3)),
-                       labels = c('Bajo', 'Medio', 'Alto'),
-                       levels = c(1,2,3)))
+elsoc_mean_zonas <- elsoc_mean_zonas %>% 
+  mutate(gse_zona = factor(with(elsoc_mean_zonas, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                      ismt_rank > 0.5201545 ~ 2,
+                                                      ismt_rank <= 0.5201545 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3)))
 
 ```
 # Descriptivo general
@@ -65,34 +63,8 @@ summarytools::dfSummary(elsoc_ams2, style = "grid")
 
 # Análisis univariado
 
-## Univariado del apego barrial
-
-```{r apego-olas}
-elsoc_long %>% 
-  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04), estrato == 1) %>% 
-  mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
-         spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
-                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
-         educ =  factor(car::recode(m01,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
-                       levels = c(1,2,3,4),
-                       labels = c('Básica','Media','Técnica', 'Universitaria'))) %>%
-  as_label(ola) %>% 
-  prop(x = spb_rec, by = ola, na.rm = TRUE) %>% 
-  ggplot(aes(y = prop, x = ola, fill = spb_rec, 
-             label = as.character(scales::percent(prop, accuracy = .1)))) + 
-  theme_bw() + 
-  geom_col(position = 'Stack') +
-  scale_fill_viridis_d(end = .85) +
-  geom_text(position = position_stack(vjust = .5),
-            size = 3, color = rep(c('white', 'white', 'black'), 5)) + 
-  theme(plot.caption = element_text(hjust = 0),
-        legend.position = 'top',
-        legend.title = element_blank()) +
-labs(x = NULL, y = NULL)
-```
-
-```{r apego-estrato}
-apbi_estrato <- elsoc_long %>% 
+```{r cob-estrato}
+bar_apbi <- elsoc_long %>% 
   filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
   mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
          spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
@@ -115,69 +87,12 @@ apbi_estrato <- elsoc_long %>%
         legend.title = element_blank()) +
   geom_text(vjust = -0.8,
             position = position_dodge(width = .9),
-            size = 2.5) +
+            size = 2) +
   labs(x = NULL, y = NULL,
        title = 'Nivel de pertenencia al barrio según ola y tipo de ciudad',
-       subtitle = 'Porcentaje que responde "De acuerdo o totalmente de acuerdo"',
-       caption = 'Fuente: Elaboración propia en base a datos ELSOC 2016-2022.\nNota: Se consideran observaciones de individuos sin atrición entre olas.\nNota 2: La pertenencia al barrio corresponde a un índice compuesto de cuatro ítems donde se consulta el grado\nde acuerdo con las afirmaciones "Este es el barrio ideal para mi", "Me siento integrado/a en este barrio",\n"Me identifico con la gente de este barrio", "Este barrio es parte de mi".')
+       subtitle = 'Porcentaje con niveles altos (>3.75)')
 
-apbi_estrato
-
-ggsave(apbi_estrato,filename = "../3_output/graficos/apbi_estrato.png", width = 10, height = 7)
-```
-
-```{r apego-educ}
-elsoc_long %>% 
-  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04), estrato == 1) %>% 
-  mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
-         spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
-                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
-         educ =  factor(car::recode(m01,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
-                       levels = c(1,2,3,4),
-                       labels = c('Básica','Media','Técnica', 'Universitaria'))) %>%
-  as_label(ola) %>% 
-  prop(spb_rec == "Niveles altos", by = c(educ, ola), na.rm = TRUE) %>%  
-  drop_na() %>% 
-  ggplot(aes(y = prop, x = ola, color = educ, group = educ,
-             label = scales::percent(prop, .1))) +
-  geom_point(size = 1.75) + 
-  geom_line() +
-  theme_bw() +   
-  scale_color_viridis_d(begin = 0, end = .88, direction = -1) +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-  ggrepel::geom_text_repel(size = 3, nudge_y = .01)+
-  theme(plot.caption = element_text(hjust = 0),
-        legend.position = 'top',
-        legend.title = element_blank()) + 
-  labs(y = NULL, x = NULL, 
-       subtitle = 'Porcentaje con nivel alto de apego barrial')
-```
-
-## Univariado de la sociabilidad barrial
-
-```{r sociab-olas}
-elsoc_long %>% 
-  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t03_01, t03_02, t03_03, t03_04), estrato == 1) %>% 
-  mutate(soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
-         soci_rec = factor(cut(soci, breaks = c(0,2.75,3.75,5)),
-                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos"))) %>%
-  as_label(ola) %>% 
-  prop(x = soci_rec, by = ola, na.rm = TRUE) %>% 
-  ggplot(aes(y = prop, x = ola, fill = soci_rec, 
-             label = as.character(scales::percent(prop, accuracy = .1)))) + 
-  theme_bw() + 
-  geom_col(position = 'Stack') +
-  scale_fill_viridis_d(end = .85) +
-  geom_text(position = position_stack(vjust = .5),
-            size = 3, color = rep(c('white', 'white', 'black'), 5)) + 
-  theme(plot.caption = element_text(hjust = 0),
-        legend.position = 'top',
-        legend.title = element_blank()) +
-labs(x = NULL, y = NULL)
-```
-
-```{r sociab-estrato}
-soci_estrato <- elsoc_long %>% 
+bar_soci <- elsoc_long %>% 
   filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
   mutate(soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
          soci_rec = factor(cut(soci, breaks = c(0,2.75,3.75,5)),
@@ -200,68 +115,20 @@ soci_estrato <- elsoc_long %>%
         legend.title = element_blank()) +
   geom_text(vjust = -0.8,
             position = position_dodge(width = .9),
-            size = 2.5) +
+            size = 2) +
   labs(x = NULL, y = NULL,
        title = 'Nivel de sociabilidad barrial según ola y tipo de ciudad',
-       subtitle = 'Porcentaje que responde "De acuerdo o totalmente de acuerdo"',
-       caption = 'Fuente: Elaboración propia en base a datos ELSOC 2016-2022.\nNota: Se consideran observaciones de individuos sin atrición entre olas.\nNota 2: La sociabilidad barrial corresponde a un índice compuesto de cuatro ítems donde se consulta el grado\nde acuerdo con las afirmaciones "En este barrio es facil hacer amigos", "La gente en este barrio es sociable",\n"La gente en este barrio es cordial", "La gente en este barrio es colaboradora".')
+       subtitle = 'Porcentaje con niveles altos (>3.75)')
 
-soci_estrato
-ggsave(soci_estrato,filename = "../3_output/graficos/soci_estrato.png", width = 10, height = 7)
+bar_cob <- gridExtra::grid.arrange(bar_apbi, bar_soci,  nrow = 2)
+ggsave(bar_cob,filename = "../3_output/graficos/bar_cob.png", width = 8, height = 10)
 
 ```
-
-```{r sociab-educ}
-elsoc_long %>% 
-  filter(tipo_atricion == 1 & ola %in% 1:6, !is_nsnr(t02_01, t02_02, t02_03, t02_04), estrato == 1) %>% 
-  mutate(soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
-         soci_rec = factor(cut(soci, breaks = c(0,2.75,3.75,5)),
-                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
-         educ =  factor(car::recode(m01,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
-                       levels = c(1,2,3,4),
-                       labels = c('Básica','Media','Técnica', 'Universitaria'))) %>%
-  as_label(ola) %>% 
-  prop(soci_rec == "Niveles altos", by = c(educ, ola), na.rm = TRUE) %>%  
-  drop_na() %>% 
-  ggplot(aes(y = prop, x = ola, color = educ, group = educ,
-             label = scales::percent(prop, .1))) +
-  geom_point(size = 1.75) + 
-  geom_line() +
-  theme_bw() +   
-  scale_color_viridis_d(begin = 0, end = .88, direction = -1) +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-  ggrepel::geom_text_repel(size = 3, nudge_y = .01)+
-  theme(plot.caption = element_text(hjust = 0),
-        legend.position = 'top',
-        legend.title = element_blank()) + 
-  labs(y = NULL, x = NULL, 
-       subtitle = 'Porcentaje con nivel alto de sociabilidad barrial')
-```
-
 
 # Análisis bivariado
 
-## Bivariado a nivel individual
-```{r boxplot}
-prom_gse <- elsoc_ams %>% 
-  group_by(ent_segr) %>% 
-  dplyr::select(apbi, soci) %>% 
-  summarise_all(mean, na.rm = T) %>% 
-  drop_na()
-
-elsoc_ams %>% 
-  ggplot(aes(x = ent_segr, y = apbi)) +
-  geom_boxplot() +
-  labs(x = "", y = "")
-
-elsoc_ams %>% 
-  ggplot(aes(x = ent_segr, y = soci)) +
-  geom_boxplot() +
-  labs(x = "", y = "")
-```
-
 ```{r correlation}
-psych::pairs.panels(prom_zonas,
+psych::pairs.panels(elsoc_mean_zonas,
              smooth = TRUE,      # If TRUE, draws loess smooths
              scale = FALSE,      # If TRUE, scales the correlation text font
              density = TRUE,     # If TRUE, adds density plots and histograms
@@ -279,107 +146,72 @@ psych::pairs.panels(prom_zonas,
 
 ## Bivariado a nivel barrial (promedios por zona)
 
-```{r scatt-segui-zona, message=FALSE, warning=FALSE}
-scat_apbi_segui <- prom_zonas %>% 
-  ggplot(aes(x = segui, y = apbi)) +
-  geom_point() +
-  geom_smooth() +
-  labs(x = "Promedio de seguridad barrial", 
-       y = "Promedio de apego barrial")
-
-scat_soci_segui <- prom_zonas %>% 
-  ggplot(aes(x = segui, y = soci)) +
-  geom_point() +
-  geom_smooth() +
-  labs(x = "Promedio de seguridad barrial", 
-       y = "Promedio de sociabilidad barrial")
-
-#ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
-
-scat_apbi_segui
-scat_soci_segui
-```
-
-```{r scatt-repbi-zona, message=FALSE, warning=FALSE}
-scat_apbi_repbi <- prom_zonas %>% 
-  ggplot(aes(x = repbi, y = apbi)) +
-  geom_point() +
-  geom_smooth() +
-  labs(x = "Promedio de reputación barrial", 
-       y = "Promedio de apego barrial")
-
-scat_soci_repbi <- prom_zonas %>% 
-  ggplot(aes(x = repbi, y = soci)) +
-  geom_point() +
-  geom_smooth() +
-  labs(x = "Promedio de reputación barrial", 
-       y = "Promedio de sociabilidad barrial")
-
-#ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
-
-scat_apbi_repbi
-scat_soci_repbi
-```
-
-```{r scatt-sacci-zona, message=FALSE, warning=FALSE}
-scat_apbi_sacci <- prom_zonas %>% 
-  ggplot(aes(x = sacci, y = apbi)) +
-  geom_point() +
-  geom_smooth() +
-  labs(x = "Promedio de satisfacción residencial", 
-       y = "Promedio de apego barrial")
-
-scat_soci_sacci <- prom_zonas %>% 
-  ggplot(aes(x = sacci, y = soci)) +
-  geom_point() +
-  geom_smooth() +
-  labs(x = "Promedio de satisfacción residencial", 
-       y = "Promedio de sociabilidad barrial")
-
-#ggsave(scat_apbi_soci,filename= "../3_output/graficos/cap2/scat_apbi_soci.png")
-
-scat_apbi_sacci
-scat_soci_sacci
-```
-
-```{r scatt-segr-zona, message=FALSE, warning=FALSE}
-scat_apbi_segr <- prom_zonas %>% 
-  ggplot(aes(x = ent_segr, y = apbi, color = educ)) +
-  geom_point() +
-  geom_smooth() +
+```{r scatt-zona, message=FALSE, warning=FALSE}
+scat_apbi_segr <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = theil_segr, y = apbi, color = gse_zona)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  geom_smooth(aes(x = theil_segr, y = apbi), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Nivel de segregación residencial", 
-       y = "Promedio de pertenencia barrial")
+       y = "Promedio de pertenencia barrial",
+       color = "GSE Zona") +
+  theme(legend.position = c(0.9, 0.2),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 8),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
 
-scat_soci_segr <- prom_zonas %>% 
-  ggplot(aes(x = ent_segr, y = soci, color = educ)) +
-  geom_point() +
-  geom_smooth() +
+scat_soci_segr <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = theil_segr, y = soci, color = gse_zona)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  geom_smooth(aes(x = theil_segr, y = soci), 
+              method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Nivel de segregación residencial", 
-       y = "Promedio de sociabilidad barrial")
+       y = "Promedio de sociabilidad barrial",
+       color = "GSE Zona") +
+  theme(legend.position = c(0.9, 0.2),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 8),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
 
-#ggsave(scat_apbi_theil_educ, filename= "../3_output/graficos/scat_apbi_theil_educ.png")
-scat_apbi_segr
-scat_soci_segr
-```
-
-```{r scatt-jane-zona, message=FALSE, warning=FALSE}
-scat_apbi_jane <- prom_zonas %>% 
-  ggplot(aes(x = ave_jane, y = apbi)) +
-  geom_point() +
-  geom_smooth() +
+scat_apbi_jane <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = jane_indx, y = apbi, color = gse_zona)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  geom_smooth(aes(x = jane_indx, y = apbi), 
+              method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Nivel de vitalidad del entorno", 
-       y = "Promedio de apego barrial")
+       y = "Promedio de pertenencia barrial",
+       color = "GSE Zona") +
+  theme(legend.position = c(0.9, 0.2),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 8),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
 
-scat_soci_jane <- prom_zonas %>% 
-  ggplot(aes(x = ave_jane, y = soci)) +
-  geom_point() +
-  geom_smooth() +
+scat_soci_jane <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = jane_indx, y = soci, color = gse_zona)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  geom_smooth(aes(x = jane_indx, y = soci), 
+              method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Nivel de vitalidad del entorno", 
-       y = "Promedio de sociabilidad barrial") 
+       y = "Promedio de sociabilidad barrial",
+       color = "GSE Zona") +
+  theme(legend.position = c(0.9, 0.2),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 8),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
 
-#ggsave(scat_apbi_theil_educ, filename= "../3_output/graficos/scat_apbi_theil_educ.png")
-scat_apbi_jane
-scat_soci_jane
+scatter_dse_cob <- gridExtra::grid.arrange(scat_apbi_segr, scat_soci_segr ,scat_apbi_jane, scat_soci_jane,  ncol = 2, nrow = 2)
+
+ggsave(scatter_dse_cob,filename = "../3_output/graficos/scatter_dse_cob.png", width = 10, height = 6)
+
+scatter_dse_cob
 ```
 
 # Análisis espacial
@@ -401,7 +233,7 @@ mapview(elsoc_ams_all_geo, zcol = "hi_theil", ap.types = "CartoDB.VoyagerNoLabel
 
 ```{r plot-map-theil}
 plot_theil <- ggplot(data = elsoc_ams_all) + 
-  geom_sf(aes(fill = hi_theil, geometry = geometry)) +
+  geom_sf(aes(fill = theil_segr, geometry = geometry)) +
   coord_sf(datum = st_crs(31979)) + 
   scale_fill_viridis_c(direction = -1) +
   theme_void() +
