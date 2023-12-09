@@ -131,8 +131,8 @@ elsoc_gs <- elsoc_gs %>%
                            labels = c('Propietario','No propietario')),
          time = m34_03_w03) %>% 
   #-----Etiqueta variables
-  var_labels(apbi = "Pertenencia Barrial",
-             apbr = "Pertenencia Barrial",
+  var_labels(apbi = "Pertenencia barrial",
+             apbr = "Pertenencia barrial",
              soci = "Sociabilidad barrial",
              cnfi = "Confianza en vecinos",
              comi = "Compromiso cívico",

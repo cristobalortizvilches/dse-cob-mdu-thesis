@@ -25,7 +25,6 @@ library(corrplot)
 library(GGally)
 library(psych)
 library(sjmisc)
-library(xlsx)
 ```
 
 ```{r load-dataset}
@@ -101,7 +100,7 @@ desc_table$Variable[desc_table$Variable == "gse_zona"] <- "NSE barrio" #cambiamo
 
 desc_table$Cronbach[is.na(desc_table$Cronbach)] <- '' #convertimos los NA en espacios vacíos
 
-#write.xlsx(desc_table, file = "../3_output/tablas/1_desc_table.xlsx", sheetName = 'data', row.names=FALSE) #guardamos
+write.xlsx(desc_table, file = "../3_output/tablas/desc_table.xlsx", sheetName = 'data', row.names=FALSE) #guardamos
 ```
 
 
@@ -233,7 +232,7 @@ elsoc_cor <- elsoc_mean_zonas %>%
                 repbi, sacci, segui,
                 theil_segr, jane_indx, ismt_rank) %>% 
   drop_na() %>% 
-  rename("Apego"="apbi", "Sociabilidad"="soci", "Reputación"="repbi","Seguridad"="segui", "Satisfacción"="sacci",
+  rename("Pertenencia"="apbi", "Sociabilidad"="soci", "Reputación"="repbi","Seguridad"="segui", "Satisfacción"="sacci",
          "Segregación"="theil_segr", "Vitalidad"="jane_indx", "NSE barrio"="ismt_rank")
 
 
