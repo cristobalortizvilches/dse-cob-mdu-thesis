@@ -131,16 +131,16 @@ elsoc_gs <- elsoc_gs %>%
                            labels = c('Propietario','No propietario')),
          time = m34_03_w03) %>% 
   #-----Etiqueta variables
-  var_labels(apbi = "Apego Barrial",
-             apbr = "Apego Barrial",
+  var_labels(apbi = "Pertenencia Barrial",
+             apbr = "Pertenencia Barrial",
              soci = "Sociabilidad barrial",
              cnfi = "Confianza en vecinos",
              comi = "Compromiso cívico",
-             segu = 'Seguridad barrial',
+             segu = ' Sentimiento seguridad',
              t10_w06 = 'Seguridad barrial',
              sacci = 'Satisfacción residencial',
-             repb = 'Reputación barrial',
-             t08_w06 = 'Reputación barrial',
+             repb = 'Reputación percibida',
+             t08_w06 = 'Reputación percibida',
              sexo = 'Sexo/Género',
              edad = 'Tramo etario',
              educ = 'Nivel educacional',
@@ -148,7 +148,13 @@ elsoc_gs <- elsoc_gs %>%
              regi = 'Régimen de propiedad vivienda',
              time = 'Tiempo de residencia',
              jh_esc_sd = 'Heterogeneidad residencial',
-             d01_01_w06 = 'Estatus social subjetivo')
+             d01_01_w06 = 'Estatus social subjetivo',
+             m0_edad_w06 = 'Edad residente',
+             m01_w06 = "Nivel educacional",
+             ent_segr = "Segregación residencial",
+             ave_jane = "Vitalidad urbana",
+             ismtpn = "NSE residente",
+             ave_gse = "NSE barrio")
 
 elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1 #estatus subjetivo de 1 a 10 (no de 0 a 10)
 ```

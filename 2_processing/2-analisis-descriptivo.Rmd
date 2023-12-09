@@ -21,6 +21,11 @@ library(viridis)
 library(elsoc)
 library(sjlabelled)
 library(ggpubr)
+library(corrplot)
+library(GGally)
+library(psych)
+library(sjmisc)
+library(xlsx)
 ```
 
 ```{r load-dataset}
@@ -31,8 +36,8 @@ load("../1_input/data/procesada/elsoc_ams_all.RData")
 load("../1_input/data/procesada/elsoc_ams_geo.RData")
 load("../1_input/data/procesada/elsoc_ams_all_geo.RData")
 
-#load(url("https://dataverse.harvard.edu/api/access/datafile/7245118"))
-#elsoc_long <- elsoc_long_2016_2022.2
+load(url("https://dataverse.harvard.edu/api/access/datafile/7245118"))
+elsoc_long <- elsoc_long_2016_2022.2
 ```
 
 ```{r summarise-dataset, message=TRUE, warning=FALSE}
@@ -40,7 +45,7 @@ elsoc_mean_zonas <- elsoc_ams %>%
   group_by(cod_zona) %>% 
   dplyr::select(idencuesta, cod_zona, 
                 apbi, soci, 
-                segui, sacci, repbi, 
+                repbi, sacci, segui, 
                 edadi, educi, essui, time,  
                 theil_pola, ismt_rank, theil_mixt, theil_segr, jane_indx) %>% 
   summarise_all(mean, na.rm = T)
@@ -65,10 +70,38 @@ elsoc_mean_zonas <- elsoc_mean_zonas %>%
 # Descriptivo general
 
 ```{r desc-table}
-elsoc_ams2 <- elsoc_ams %>% 
-  dplyr::select(-geometry)
+#elsoc_ams2 <- elsoc_ams %>% dplyr::select(-geometry)
+#a <- summarytools::dfSummary(elsoc_ams2, style = "grid")
 
-summarytools::dfSummary(elsoc_ams2, style = "grid")
+elsoc_long_2022 <- elsoc_long %>% 
+  filter(ola == 1, !is_nsnr(t02_01, t02_02, t02_03, t02_04, t03_01, t03_02, t03_03, t03_04, t06_02, t06_05, t06_06, t06_07))
+
+alfa_apbi <- psych::alpha(dplyr::select(elsoc_long_2022, t02_01, t02_02, t02_03, t02_04)) 
+alfa_soci <- psych::alpha(dplyr::select(elsoc_long_2022, t03_01, t03_02, t03_03, t03_04))
+alfa_sacci <- psych::alpha(dplyr::select(elsoc_long_2022, t06_02, t06_05, t06_06, t06_07))
+
+alfa_cron <- c(alfa_apbi[[1]][,1], alfa_soci[[1]][,1], rep("", 2), alfa_sacci[[1]][,1], rep("", 14)) %>% 
+  as.numeric() %>% 
+  round(digits = 2)
+
+elsoc_desc <- elsoc_ams %>% 
+  dplyr::select(apbi, soci, 
+                repbi, segui, sacci, 
+                edadi, educi, essui, time,
+                theil_segr, jane_indx, ismt_rank, gse_zona)
+
+# tabla descriptivos
+desc_table <- vtable::sumtable(elsoc_desc, 
+                       digits = 2, out = "return", labels = TRUE,
+                       summ = c('notNA(x)','mean(x)','sd(x)','min(x)','max(x)'),
+                       summ.names = c('N Válidos','Media/Porcentaje','SD','Mínimo','Máximo')) %>% 
+  mutate("Cronbach" = alfa_cron) #agregamos vector cronbach
+
+desc_table$Variable[desc_table$Variable == "gse_zona"] <- "NSE barrio" #cambiamos manualmente este porfíao que no tomó la etiqueta
+
+desc_table$Cronbach[is.na(desc_table$Cronbach)] <- '' #convertimos los NA en espacios vacíos
+
+#write.xlsx(desc_table, file = "../3_output/tablas/1_desc_table.xlsx", sheetName = 'data', row.names=FALSE) #guardamos
 ```
 
 
@@ -132,7 +165,7 @@ bar_soci <- elsoc_long %>%
        subtitle = 'Porcentaje con niveles altos (>3.75)') 
 
 bar_cob <- gridExtra::grid.arrange(bar_apbi, bar_soci,  ncol = 2)
-ggsave(bar_cob,filename = "../3_output/graficos/1_bar_cob.png", width = 12, height = 6 , dpi = 300)
+#ggsave(bar_cob,filename = "../3_output/graficos/1_bar_cob.png", width = 12, height = 6 , dpi = 300)
 
 ```
 
@@ -173,7 +206,6 @@ boxplot_apbi_jane <- elsoc_mean_zonas %>%
         axis.title = element_text(size = 10, face = "bold")) +
   scale_fill_viridis(discrete = TRUE, option = "D")
 
-
 boxplot_soci_jane <- elsoc_mean_zonas %>% 
   ggplot(aes(y = soci, x = jane_indx_f, fill = gse_zona)) +
   geom_boxplot() +
@@ -191,24 +223,57 @@ ggsave(boxplot_dse_cob,filename = "../3_output/graficos/2_boxplot_dse_cob.png", 
 ```
 
 
+
 # Análisis bivariado
 
-```{r correlation}
-psych::pairs.panels(elsoc_mean_zonas,
-             smooth = TRUE,      # If TRUE, draws loess smooths
-             scale = FALSE,      # If TRUE, scales the correlation text font
-             density = TRUE,     # If TRUE, adds density plots and histograms
-             ellipses = F,       # If TRUE, draws ellipses
-             method = "pearson", # Correlation method (also "spearman" or "kendall")
-             pch = 21,           # pch symbol
-             lm = TRUE,          # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
-             cor = TRUE,         # If TRUE, reports correlations
-             jiggle = FALSE,     # If TRUE, data points are jittered
-             factor = 2,         # Jittering factor
-             hist.col = 4,       # Histograms color
-             stars = TRUE,       # If TRUE, adds significance level with stars
-             ci = TRUE)          # If TRUE, adds confidence intervals
+```{r corr-plot, echo=FALSE, message=FALSE, warning=FALSE}
+
+elsoc_cor <- elsoc_mean_zonas %>% 
+  dplyr::select(apbi, soci, 
+                repbi, sacci, segui,
+                theil_segr, jane_indx, ismt_rank) %>% 
+  drop_na() %>% 
+  rename("Apego"="apbi", "Sociabilidad"="soci", "Reputación"="repbi","Seguridad"="segui", "Satisfacción"="sacci",
+         "Segregación"="theil_segr", "Vitalidad"="jane_indx", "NSE barrio"="ismt_rank")
+
+
+
+color_lm <- function(data, mapping, ...){
+  p <- ggplot(data = elsoc_cor, mapping = mapping) + 
+    geom_point() + 
+    geom_smooth(method=lm, fill="red", color="red", ...)
+  p
+}
+
+color_cor <- function(data, mapping, method="p", use="pairwise", ...){
+
+              # grab data
+              x <- eval_data_col(data, mapping$x)
+              y <- eval_data_col(data, mapping$y)
+
+              # calculate correlation
+              corr <- cor(x, y, method=method, use=use)
+
+              # calculate colour based on correlation value
+              # Here I have set a correlation of minus one to blue, 
+              # zero to white, and one to red 
+              # Change this to suit: possibly extend to add as an argument of `my_fn`
+              colFn <- colorRampPalette(c("red", "white", "blue"), interpolate ='spline')
+              fill <- colFn(100)[findInterval(corr, seq(-1, 1, length=100))]
+
+              ggally_cor(data = data, mapping = mapping, ...) + 
+                theme_void() +
+                theme(panel.background = element_rect(fill=fill))
+            }
+
+cor_plot  <- ggpairs(elsoc_cor,
+             upper = list(continuous = color_cor),
+             lower = list(continuous = color_lm))
+
+ggsave(cor_plot,filename = "../3_output/graficos/cor_plot.png", width = 8, height = 8, dpi = 300)
+
 ```
+
 
 ## H1: segregación->cohesión & segregacion->ms~cohesion
 
