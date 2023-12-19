@@ -81,7 +81,7 @@ elsoc_gs <- elsoc_d %>%
                 starts_with("t06_"), t08_w06, t10_w06, # mecanismos subjetivos 
                 jh_esc_sd, hi_theil, ismtpn = ismtpn.x, ave_gse = AIM_CON, ENTMEAN, ENTWGT, ave_jane = Ave_jan_nd, #desigualdad socioespacial
                 m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m33_w05, m34_03_w03) %>% #controles 
-  filter(comuna_cod_w06 > 11000) #dejar sólo casos que no se han ido de comunas del gran santiago en la medición de la ola 6
+  filter(comuna_cod_w06 < 13605 & comuna_cod_w06 > 11000 & !comuna_cod_w06 %in% c(13602, 13603)) #dejar sólo casos que no se han ido de comunas del gran santiago en la medición de la ola 6
 
 #convertimos no sabe/no responde/no disponible/sin dato/no aplica a NA
 elsoc_gs[elsoc_gs == -888 | elsoc_gs == -999 | elsoc_gs == 994 | elsoc_gs == 995 | elsoc_gs == 996 | elsoc_gs == -666 | elsoc_gs == -777] <- NA

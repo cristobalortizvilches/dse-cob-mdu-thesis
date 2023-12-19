@@ -106,6 +106,7 @@ write.xlsx(desc_table, file = "../3_output/tablas/desc_table.xlsx", sheetName = 
 
 # Análisis univariado
 
+
 ```{r cob-estrato}
 bar_apbi <- elsoc_long %>% 
   filter(tipo_atricion == 1 & ola %in% c(1,6), !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
@@ -168,13 +169,123 @@ bar_cob <- gridExtra::grid.arrange(bar_apbi, bar_soci,  ncol = 2)
 
 ```
 
-```{r boxplot}
+```{r boxplot-cob-gse}
+boxplot_apbi <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                     ismt_rank > 0.5144 ~ 2,
+                                                     ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = gse_zona, y = apbi, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = mean(elsoc_ams$apbi, na.rm = T), color = 'red') +
+  geom_text(aes(0, mean(elsoc_ams$apbi, na.rm = T), label = "x̅ = 3.5", vjust = -1, hjust =-0.2), size = 3) +
+    labs(x = "", 
+         y = "Pertenencia barrial",
+         fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text.x = element_text(size = 12)) +
+  scale_fill_viridis(discrete = TRUE, option = "D") 
+
+boxplot_soci <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                     ismt_rank > 0.5144 ~ 2,
+                                                     ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = gse_zona, y = soci, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = mean(elsoc_ams$soci, na.rm = T), color = 'red') +
+  geom_text(aes(0, mean(elsoc_ams$soci, na.rm = T), label = "x̅ = 3.4", vjust = -1, hjust =-0.2), size = 3) +
+    labs(x = "", 
+         y = "Sociabilidad barrial",
+         fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text.x = element_text(size = 12)) +
+  scale_fill_viridis(discrete = TRUE, option = "D") 
+
+boxplot_cob <- ggarrange(boxplot_apbi, boxplot_soci, nrow = 1, align = "hv", common.legend = TRUE, legend = "top")
+
+ggsave(boxplot_cob,filename = "../3_output/graficos/boxplot_cob.png", width = 8, height = 6, dpi = 300)
+
+```
+
+
+```{r boxplot-cob-gse-comuna}
+elsoc_comunas <-  elsoc_ams %>% 
+  group_by(comuna) %>% 
+  dplyr::select(ismt_rank) %>% 
+  summarise_all(mean, na.rm = T) 
+
+elsoc_comunas <- elsoc_comunas %>% 
+  mutate(ismt_label = str_sub(ismt_rank, start = 1, -13)) %>% 
+  mutate(labels = paste0(comuna," (",ismt_label,")")) %>% 
+  dplyr::select(labels, ismt_rank) %>% 
+  arrange(ismt_rank)
+
+boxplot_apbi_gse <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                     ismt_rank > 0.5144 ~ 2,
+                                                     ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = factor(reorder(comuna, ismt_rank),labels = elsoc_comunas$labels), y = apbi, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 3.5, color = 'red') +
+    labs(x = "Comuna (Promedio ISMT)", 
+       y = "Pertenencia barrial",
+       fill = "NSE Barrio") +
+  theme(legend.position = "none",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_fill_viridis(discrete = TRUE, option = "D") +
+  facet_wrap(.~gse_zona) +
+  coord_flip()
+
+boxplot_soci_gse <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                            ismt_rank > 0.5144 ~ 2,
+                                                            ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = reorder(comuna, ismt_rank), 
+             y = soci, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 3.5, color = 'red') +
+    labs(x = "", 
+       y = "Sociabilidad barrial",
+       fill = "NSE Barrio") +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.y = element_blank()) +
+  scale_fill_viridis(discrete = TRUE, option = "D") +
+  facet_wrap(.~gse_zona) +
+  coord_flip()
+
+boxplot_cob_gse <- ggarrange(boxplot_apbi_gse, boxplot_soci_gse, nrow = 1, align = "hv")
+
+ggsave(boxplot_cob_gse, filename = "../3_output/graficos/boxplot_cob_gse.png", width = 10, height = 5 , dpi = 300)
+
+```
+
+```{r boxplot-cob-gse-dse}
 boxplot_apbi_segr <- elsoc_mean_zonas %>% 
   ggplot(aes(y = apbi, x = theil_segr_f, fill = gse_zona)) +
   geom_boxplot() +
   labs(x = "", 
        y = "Pertenencia",
-       fill = "GSE Zona") +
+       fill = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -186,7 +297,7 @@ boxplot_soci_segr <- elsoc_mean_zonas %>%
   geom_boxplot() +
   labs(x = "", 
        y = "Sociabilidad",
-       fill = "GSE Zona") +
+       fill = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -198,7 +309,7 @@ boxplot_apbi_jane <- elsoc_mean_zonas %>%
   geom_boxplot() +
   labs(x = "", 
        y = "Pertenencia",
-       fill = "GSE Zona") +
+       fill = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -210,7 +321,7 @@ boxplot_soci_jane <- elsoc_mean_zonas %>%
   geom_boxplot() +
   labs(x = "", 
        y = "Sociabilidad",
-       fill = "GSE Zona") +
+       fill = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -218,9 +329,40 @@ boxplot_soci_jane <- elsoc_mean_zonas %>%
   scale_fill_viridis(discrete = TRUE, option = "D")
 
 boxplot_dse_cob <- ggarrange(boxplot_apbi_segr, boxplot_soci_segr, boxplot_apbi_jane, boxplot_soci_jane,  ncol = 2, nrow = 2, common.legend = TRUE, legend="top")
-ggsave(boxplot_dse_cob,filename = "../3_output/graficos/2_boxplot_dse_cob.png", width = 8, height = 8, dpi = 300)
+
+ggsave(boxplot_dse_cob,filename = "../3_output/graficos/2_boxplot_dse_cob.png", width = 8, height = 6, dpi = 300)
 ```
 
+```{r desc-cob-gse}
+options(digits = 3)
+
+tabla_prop <- elsoc_mean_zonas %>% 
+  dplyr::select(apbi, soci, 
+                repbi, sacci, segui, 
+                theil_segr, jane_indx, 
+                edadi, educi, essui, time, ismt_rank, gse_zona) %>% 
+  group_by(gse_zona) %>%
+  summarise_all(funs(mean), na.rm = T) 
+
+row.names(tabla_prop) <- c('Alto', 'Medio', 'Bajo')
+
+tabla_prop <- tabla_prop  %>% t() 
+  
+tabla_prop <- tabla_prop[-1,]
+
+row.names(tabla_prop) <- c('Pertenencia barrial', 'Sociabilidad barrial', 
+                           'Reputación percibida', 'Satisfacción residencial', 'Sentimiento de seguridad', 
+                           'Segregación residencial', 'Vitalidad urbana', 
+                           'Edad residente', 'Nivel educacional', 'Estatus subjetivo', 'Tiempo residencia', 'Puntaje ISMT')
+
+tabla_prop <- as.data.frame(tabla_prop) %>% 
+  rownames_to_column("Variables")
+
+writexl::write_xlsx(tabla_prop, "../3_output/tablas/tabla_prop.xlsx",
+  col_names = TRUE,
+  format_headers = TRUE
+)
+```
 
 
 # Análisis bivariado
@@ -286,7 +428,7 @@ scat_apbi_segr <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Segregación", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -302,7 +444,7 @@ scat_soci_segr <- elsoc_mean_zonas %>%
               method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Segregación", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -327,7 +469,7 @@ scat_apbi_segr_repbi <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Reputación", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 8),
@@ -345,7 +487,7 @@ scat_soci_segr_repbi <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Reputación", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 8),
@@ -365,7 +507,7 @@ scat_apbi_segr_segui <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -383,7 +525,7 @@ scat_soci_segr_segui <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 8),
@@ -409,7 +551,7 @@ scat_apbi_jane <- elsoc_mean_zonas %>%
               method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Vitalidad", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -425,7 +567,7 @@ scat_soci_jane <- elsoc_mean_zonas %>%
               method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Vitalidad", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -433,6 +575,7 @@ scat_soci_jane <- elsoc_mean_zonas %>%
   scale_color_viridis(discrete = TRUE, option = "D")
 
 scatter_dse_cob <- ggarrange(scat_apbi_segr, scat_soci_segr, scat_apbi_jane, scat_soci_jane,  ncol = 2, nrow = 2, common.legend = TRUE, legend = "top")
+
 ggsave(scatter_dse_cob,filename = "../3_output/graficos/4_scatter_dse_cob.png", width = 8, height = 6, dpi = 300)
 scatter_dse_cob
 ```
@@ -451,7 +594,7 @@ scat_apbi_jane_sacci <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Satisfacción", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 8),
@@ -469,7 +612,7 @@ scat_soci_jane_sacci <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Satisfacción", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 8),
@@ -489,7 +632,7 @@ scat_apbi_jane_segui <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 8),
@@ -507,7 +650,7 @@ scat_soci_jane_segui <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 8),
         legend.text = element_text(size = 8),
@@ -533,7 +676,7 @@ scat_apbi_repbi <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Reputación", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -549,7 +692,7 @@ scat_soci_repbi <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Reputación", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -566,7 +709,7 @@ scat_apbi_sacci <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Satisfacción", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -582,7 +725,7 @@ scat_soci_sacci <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Satisfacción", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -599,7 +742,7 @@ scat_apbi_segui <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Pertenencia",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -616,7 +759,7 @@ scat_soci_segui <- elsoc_mean_zonas %>%
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Sociabilidad",
-       color = "GSE Zona") +
+       color = "NSE Barrio") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -625,7 +768,12 @@ scat_soci_segui <- elsoc_mean_zonas %>%
 
 scatter_ms_cob <- ggarrange(scat_apbi_repbi, scat_soci_repbi, scat_apbi_segui, scat_soci_segui, scat_apbi_sacci, scat_soci_sacci, ncol = 2, nrow = 3, common.legend = TRUE, legend="top")
 
-ggsave(scatter_ms_cob,filename = "../3_output/graficos/5_scatter_ms_cob.png", width = 8, height = 8, dpi = 300)
+ggsave(scatter_ms_cob,filename = "../3_output/graficos/5_scatter_ms_cob.png", width = 8, height = 6, dpi = 300)
+
+scatter_dse_ms_cob <- ggarrange(scat_apbi_segr, scat_soci_segr, scat_apbi_jane, scat_soci_jane, scat_apbi_repbi, scat_soci_repbi, scat_apbi_segui, scat_soci_segui, scat_apbi_sacci, scat_soci_sacci, ncol = 2, nrow = 5, common.legend = TRUE, legend="top")
+
+ggsave(scatter_dse_ms_cob,filename = "../3_output/graficos/scatter_dse_ms_cob.png", width = 8, height = 8, dpi = 300)
+
 ```
 
 

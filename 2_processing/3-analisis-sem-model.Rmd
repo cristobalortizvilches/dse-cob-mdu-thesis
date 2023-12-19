@@ -102,9 +102,9 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      apbi ~ b1*repbi + b2*sacci + b3*segui + c1*theil_mixt + c2*jane_indx + c3*ismt_rank
-      repbi ~ a1*theil_mixt
-      segui ~ a2*theil_mixt
+      apbi ~ b1*repbi + b2*sacci + b3*segui + c1*theil_segr + c2*jane_indx + c3*ismt_rank
+      repbi ~ a1*theil_segr
+      segui ~ a2*theil_segr
       sacci ~ a3*jane_indx
       segui ~ a4*jane_indx
       
@@ -112,7 +112,7 @@ level: 2
       repbi ~~ segui
       segui ~~ sacci
       sacci ~~ repbi
-      theil_mixt ~~ ismt_rank
+      theil_segr ~~ ismt_rank
       
       # Efecto indirecto 
       ind_segr_repbi_apbi := a1*b1
@@ -144,9 +144,9 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      soci ~ b1*repbi + b2*sacci + b3*segui + c1*theil_mixt + c2*jane_indx + c3*ismt_rank
-      repbi ~ a1*theil_mixt
-      segui ~ a2*theil_mixt
+      soci ~ b1*repbi + b2*sacci + b3*segui + c1*theil_segr + c2*jane_indx + c3*ismt_rank
+      repbi ~ a1*theil_segr
+      segui ~ a2*theil_segr
       sacci ~ a3*jane_indx
       segui ~ a4*jane_indx
       
@@ -154,7 +154,7 @@ level: 2
       repbi ~~ segui
       segui ~~ sacci
       sacci ~~ repbi
-      theil_mixt ~~ ismt_rank
+      theil_segr ~~ ismt_rank
      
       # Efecto indirecto 
       ind_segr_repbi_soci := a1*b1
