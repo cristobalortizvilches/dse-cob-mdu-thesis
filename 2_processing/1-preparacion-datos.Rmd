@@ -164,7 +164,10 @@ elsoc_gs_short <- elsoc_gs %>%
   dplyr::select(idencuesta, comuna_w06, comuna_cod_w06, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
          apbi, apbr, soci, socr, cnfi, comi, segu, segui=t10_w06, sacci, repb, repbi=t08_w06 , #cohesión y mecanismos
          sexo, edad, edadi=m0_edad_w06, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
-         theil_pola=hi_theil, ismt_rank=ismtpn, gse_zona = ave_gse, ent_mean=ENTMEAN, theil_mixt=ENTWGT, theil_segr=ent_segr, jane_indx=ave_jane) #desigualdad
+         theil_pola=hi_theil, ismt_rank=ismtpn, gse_zona = ave_gse, ent_mean=ENTMEAN, theil_mixt=ENTWGT, theil_segr=ent_segr, ave_jane) %>%  #desigualdad
+  mutate(nse_zonas = factor(car::recode(gse_zona, "c('AB', 'C1')=1; c('C2','C3')=2; c('D','E')=3"),
+                      labels = c("Alto", "Medio", "Bajo")),
+         jane_indx = rescale(ave_jane, to = c(0,1)))
 
 zonas_ams <- mapa_zonas %>% 
   filter(codigo_region == 13) %>% 
