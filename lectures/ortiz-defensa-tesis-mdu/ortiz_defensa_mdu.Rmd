@@ -131,7 +131,7 @@ DEFENSA DE TESIS PARA EL GRADO DE MAGÍSTER EN DESARROLLO URBANO
 
 .text_70[COMISIÓN]
 
-.text_70[**María Luisa Méndez (lectora), Luis Fuentes (interno) y Alejandra Rasse (externa)**]
+.text_70[**María Luisa Méndez, Luis Fuentes y Alejandra Rasse**]
 
 .text_70[INSTITUTO DE ESTUDIOS URBANOS Y TERRITORIALES - PONTIFICIA UNIVERSIDAD CATÓLICA DE CHILE]
 
@@ -200,7 +200,7 @@ class: inverse, center, middle
 
 ## Objetivo y pregunta
 
-Ante este vacío, **el objetivo** explicar la influencia de e la desigualdad socioespacial mediante mecanismos subjetivos, es decir, a través de indicadores que expresen la experiencia en el barrio. **Rol de al estructura simbólica**
+Ante este vacío, **el objetivo** explicar la influencia de e la desigualdad socioespacial mediante mecanismos subjetivos, es decir, a través de indicadores que expresen la experiencia en el barrio. **Rol de la estructura simbólica**
 
 --
 
@@ -437,7 +437,7 @@ Efecto mediador es total, es decir, en ausencia de estas
 
 Destacan dos efectos subjetivados:
 
-Homogeneidad ⬆️ → Reputación ⬇️ → Cohesión ⬆️
+Homogeneidad ⬆️ → Reputación ⬇️ → Cohesión ⬇️ 
 
 Vitalidad ⬆️ → Seguridad ⬇️ → Cohesión ⬇️ 
 
@@ -533,14 +533,74 @@ Mayor peso de la estructura simbólica, la cuál internaliza mejor la estructura
 
 ---
 
+## Síntesis
+
+```{r echo=FALSE, out.width = '60%', fig.align = 'center'}
+knitr::include_graphics('./img/esquema-msem-con.svg')
+```
+
+---
+
+## Síntesis
+
+```{r echo=FALSE, out.width = '60%', fig.align = 'center'}
+knitr::include_graphics('./img/esquema-msem-4-result-a1.svg')
+```
+
+---
+
+## Síntesis
+
+```{r echo=FALSE, out.width = '60%', fig.align = 'center'}
+knitr::include_graphics('./img/esquema-msem-4-result-a2.svg')
+```
+
+---
+
+## Síntesis
+
+```{r echo=FALSE, out.width = '60%', fig.align = 'center'}
+knitr::include_graphics('./img/esquema-msem-4-result-b1.svg')
+```
+
+---
+
+## Síntesis
+
+```{r echo=FALSE, out.width = '60%', fig.align = 'center'}
+knitr::include_graphics('./img/esquema-msem-4-result-b2.svg')
+```
+
+---
+
+## Síntesis
+
+```{r echo=FALSE, out.width = '60%', fig.align = 'center'}
+knitr::include_graphics('./img/esquema-msem-4-result-b3.svg')
+```
+
+---
+
+## Síntesis
+
+```{r echo=FALSE, out.width = '60%', fig.align = 'center'}
+knitr::include_graphics('./img/esquema-msem-4-result.svg')
+```
+
+---
+
 ## Contribución
 
 1. **Con los *efectos subjetivados* identificamos un mecanismo explicativo para un tema cada vez más relevante para la política territorial chilena**
 
+  - Políticas de integración territorial deben considerar la reputación territorial y la seguridad ciudadana, que si bien dependen en parte de las condiciones socioespaciales, van más allá de ella.
+
 --
 
-2. **Los *efectos subjetivados* operan en grupos bajos y medios, en cambio grupos altos pueden prescidir de ellos en virtud de su posición ventajosa**
+2. **Los *efectos subjetivados* operan en grupos bajos y medios, en cambio grupos altos pueden prescindir de ellos en virtud de su posición ventajosa**
 
+ - Grupos bajos y medios dependen de la reputación, satisfacción y seguridad para cohesionarse, grupos altos en mucha menor medida
+  
 ---
 
 class: inverse, center, middle
