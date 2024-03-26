@@ -29,22 +29,22 @@ remove(list = ls())
 
 #load datasets
 #load(url("https://dataverse.harvard.edu/api/access/datafile/6160180")) #ola 5 2021
-load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #wide 2016-2022
 #load(url("https://dataverse.harvard.edu/api/access/datafile/7245118")) #long 2026-2022
-datos_terr <- readxl::read_excel("../1_input/data/original/dterr-w01-w04/BASE_2019_COD.xlsx")
-manzanas <- read_dta("../1_input/data/original/manzanas-confidencial/Manzanas_ELSOC2019_20200707.dta")
-theil <- read.csv("../1_input/data/original/otros/segregation_theil.csv")
-ismt_jane <- readxl::read_excel("../1_input/data/original/ocuc-ismt/ismt_jane.xlsx")
-ismt_aim <- readxl::read_excel("../1_input/data/original/ocuc-ismt/ismt_aim.xlsx")
+load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #wide 2016-2022
+elsoc_terr <- readxl::read_excel("../1_input/data/original/dterr-w01-w04/BASE_2019_COD.xlsx")
+manzanas <- read_dta("../1_input/data/original/manzanas-confidencial/Manzanas_ELSOC2019_20200707.dta") #manzanas elsoc
+theil <- read.csv("../1_input/data/original/otros/segregation_theil.csv") #theil calculado por QR
+ismt_jane <- readxl::read_excel("../1_input/data/original/ocuc-ismt/ismt_jane.xlsx") #ismt y jane index calculados por RT/OCUC
+ismt_aim <- readxl::read_excel("../1_input/data/original/ocuc-ismt/ismt_aim.xlsx") #gse calculado por RT
 ```
 
 ```{r merge-datasets}
 #selección varibales
 elsoc_2022 <- elsoc_wide_2016_2022.2 %>% 
-  dplyr::select(idencuesta, estrato_disenno, segmento_disenno, c07_01_w05, m33_w05, m34_03_w03, ends_with("_w06")) #selecciono de la ola 6 o, en su defecto, de la última ola medida
+  dplyr::select(idencuesta, estrato_disenno, segmento_disenno, c07_01_w05, m33_w05, m34_03_w03, t04_06_w04, t04_07_w04, ends_with("_w06")) #selecciono de la ola 6 o, en su defecto, de la última ola medida
 
 #join datos 2022 y datos territoriales (2019) 
-elsoc_a <- dplyr::left_join(x = elsoc_2022, y = datos_terr, by = "idencuesta") 
+elsoc_a <- dplyr::left_join(x = elsoc_2022, y = elsoc_terr, by = "idencuesta")
 
 #join con id de manzanas reales
 manzanas$idencuesta <- as.numeric(manzanas$idencuesta) #cambio clase para hacer el siguiente join
@@ -59,27 +59,24 @@ theil <- theil %>% rename("cod_zona" = "geocodigo") #renombrar variable para pos
 elsoc_c <- dplyr::left_join(x = elsoc_b, y = theil, by = "cod_zona") %>% 
   rename("hi_theil" = "Hi_final")
 
-#join con ismt con jane y elsoc
-
+#join con ismt y jane
 ismt_jane <- ismt_jane %>% rename("cod_zona" = "GEOCODIGO") #renombrar variable para posterior join
-ismt_jane$cod_zona <- as.numeric(ismt_jane$cod_zona)
-ismt_aim <- ismt_aim %>% rename("cod_zona" = "GEOCODIGO")
-ismt_aim$cod_zona <- as.numeric(ismt_aim$cod_zona)
-
+ismt_jane$cod_zona <- as.numeric(ismt_jane$cod_zona) #cambio clase para hacer el siguiente join
+ismt_aim <- ismt_aim %>% rename("cod_zona" = "GEOCODIGO") #renombrar variable para posterior join
+ismt_aim$cod_zona <- as.numeric(ismt_aim$cod_zona) #cambio clase para hacer el siguiente join
 ismt_all <- dplyr::left_join(x = ismt_aim, y = ismt_jane, by = "cod_zona")
-
 elsoc_d <- dplyr::left_join(x = elsoc_c, y = ismt_all, by = "cod_zona")
 ```
 
 ```{r clean-dataset}
 #selección de variables
 elsoc_gs <- elsoc_d %>% 
-  filter(estrato_w06 == 1) %>% 
+  filter(estrato_w06 == 1) %>% #solo RM
   dplyr::select(idencuesta, #id individual
-                estrato_disenno, comuna_w06, comuna_cod_w06, cod_comuna,dist, zona, cod_zona, segmento_disenno, segmento, manzana,  #id geográficos
+                estrato_disenno, comuna_w06, comuna_cod_w06, cod_comuna, dist, zona, cod_zona, segmento_disenno, segmento, manzana,  #id geográficos
                 starts_with("t02_"), starts_with("t03_"), t01_w06, t05_w06, c12_01_w06, c07_01_w05, # cohesión barrial
-                starts_with("t06_"), t08_w06, t10_w06, # mecanismos subjetivos 
-                jh_esc_sd, hi_theil, ismtpn = ismtpn.x, ave_gse = AIM_CON, ENTMEAN, ENTWGT, ave_jane = Ave_jan_nd, #desigualdad socioespacial
+                starts_with("t06_"), t08_w06, t10_w06, t04_06_w04, t04_07_w04, # mecanismos subjetivos 
+                jh_esc_sd, hi_theil, ismtpn.x, AIM_CON, ENTMEAN, ENTWGT, starts_with("Ave_"), #desigualdad socioespacial
                 m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m33_w05, m34_03_w03) %>% #controles 
   filter(comuna_cod_w06 < 13605 & comuna_cod_w06 > 11000 & !comuna_cod_w06 %in% c(13602, 13603)) #dejar sólo casos que no se han ido de comunas del gran santiago en la medición de la ola 6
 
@@ -91,8 +88,10 @@ elsoc_gs[elsoc_gs == -888 | elsoc_gs == -999 | elsoc_gs == 994 | elsoc_gs == 995
 elsoc_gs <- elsoc_gs %>% 
   remove_all_labels() %>%
   #-----Recode Y: cohesión barrial
-  mutate(apbi = (t02_01_w06 + t02_02_w06 + t02_03_w06 + t02_04_w06)/4) %>% 
-  mutate(soci = (t03_01_w06 + t03_02_w06 + t03_03_w06 + t03_04_w06)/4) %>% 
+  mutate(apbi = rowMeans(select(., starts_with("t02_")), na.rm = TRUE),
+         soci = rowMeans(select(., starts_with("t03_")), na.rm = TRUE),
+         comi = (c07_01_w05 + c12_01_w06),
+         cnfi = t01_w06) %>% 
   mutate(apbr = factor(case_when(apbi < 2 ~ 4, 
                                  apbi < 3 ~ 3,
                                  apbi < 4 ~ 2, 
@@ -103,30 +102,48 @@ elsoc_gs <- elsoc_gs %>%
                                  soci < 4 ~ 2, 
                                  soci <= 5 ~ 1),
                            labels = c('Alto', 'Medio alto', 'Medio bajo', 'Bajo')),
-         cnfi = t01_w06,
-         comi = (c07_01_w05 + c12_01_w06),
   #-----Recode M: mecanismos subjetivos 
          segu = factor(car::recode(t10_w06, "1:2=1;3=2;4:5=3"),
                            labels = c("Baja",
                                       "Media",
                                       "Alta")),
+         segui = t10_w06,
          sacci = (t06_02_w06 + t06_05_w06 + t06_06_w06 + t06_07_w06)/4,
          repb = factor(car::recode(t08_w06, "1:2=1;3=2;4:5=3"),
                              labels = c("Negativa",
                                         "Neutra", 
                                         "Positiva")),
+         repbi = t08_w06,
+         desgr = t04_06_w04,
+         desga = t04_07_w04,
   #-----Recode X: desigualdad socio espacial
-         segr = ((jh_esc_sd - max(jh_esc_sd, na.rm = T)) * -1) + min(jh_esc_sd, na.rm = T),
-         ent_segr = ((ENTWGT - max(ENTWGT, na.rm = T)) * -1) + min(ENTWGT, na.rm = T),
-  #-----Recode controles socio-demográficas
-         sexo = factor(m0_sexo_w06, labels = c('Hombre', 'Mujer')),
+         sd_segr = ((jh_esc_sd - max(jh_esc_sd, na.rm = T)) * -1) + min(jh_esc_sd, na.rm = T), #invierto para que mida homogeneidad (sd)
+         theil_segr = ((ENTWGT - max(ENTWGT, na.rm = T)) * -1) + min(ENTWGT, na.rm = T), #invierto para que mida homogeneidad (theil)
+         theil_mixt = ENTWGT,
+         theil_pola = hi_theil, 
+         ismt_rank = ismtpn.x,
+         gse_zona = AIM_CON) %>% 
+  mutate(nse_zonas = factor(car::recode(gse_zona, "c('AB','C1')=1; c('C2','C3')=2; c('D','E')=3"),
+                      labels = c("Alto","Medio","Bajo")),
+         jane_indx = scales::rescale(Ave_jan_nd, to = c(0,1)),
+         jane_conc = scales::rescale(Ave_cncntr, to = c(0,1)),
+         jane_divu = scales::rescale(Ave_dvrs_s, to = c(0,1)),
+         jane_edif = scales::rescale(Ave_agd_bl, to = c(0,1)),
+         jane_opco = scales::rescale(Ave_cnt_pp, to = c(0,1)),
+         jane_acce = scales::rescale(Ave_accs_s, to = c(0,1)),
+         jane_dist = scales::rescale(Ave_dst_bv, to = c(0,1))) %>% 
+  #-----Recode C: controles sociodemográficos
+  mutate(sexo = factor(m0_sexo_w06, labels = c('Hombre', 'Mujer')),
          edad = factor(car::recode(m0_edad_w06, "18:29=1; 30:49=2; 50:64=3; 65:150=4"),
                        labels = c('18-29', '30-49', '50-64', '65 o más')),
+         edadi=m0_edad_w06,
          educ = factor(car::recode(m01_w06,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
                        labels = c("Básica", "Media", "Técnica", "Universitaria"),
                        levels = c(1,2,3,4)),
+         educi=m01_w06,
          essu = factor(car::recode(d01_01_w06, "c(6,7,8,9,10)=1; c(4,5)=2; c(0,1,2,3)=3"),
                       labels = c("Alto", "Medio", "Bajo")),
+         essui=d01_01_w06,
          regi = factor(car::recode(m33_w05, "1:2=1;3:7=2"),
                            labels = c('Propietario','No propietario')),
          time = m34_03_w03) %>% 
@@ -134,40 +151,48 @@ elsoc_gs <- elsoc_gs %>%
   var_labels(apbi = "Pertenencia barrial",
              apbr = "Pertenencia barrial",
              soci = "Sociabilidad barrial",
+             socr = "Sociabilidad barrial",
              cnfi = "Confianza en vecinos",
              comi = "Compromiso cívico",
-             segu = ' Sentimiento seguridad',
-             t10_w06 = 'Seguridad barrial',
+             segu = 'Sentimiento seguridad',
+             segui = 'Sentimiento seguridad',
              sacci = 'Satisfacción residencial',
              repb = 'Reputación percibida',
-             t08_w06 = 'Reputación percibida',
+             repbi = 'Reputación percibida',
+             desgr = 'Residentes desagradables',
+             desga = 'Actividades desagradables',
              sexo = 'Sexo/Género',
              edad = 'Tramo etario',
              educ = 'Nivel educacional',
              essu = 'Estatus social subjetivo',
+             essui = 'Estatus social subjetivo',
+             edadi = 'Edad residente',
+             educi = "Nivel educacional",
              regi = 'Régimen de propiedad vivienda',
              time = 'Tiempo de residencia',
-             jh_esc_sd = 'Heterogeneidad residencial',
-             d01_01_w06 = 'Estatus social subjetivo',
-             m0_edad_w06 = 'Edad residente',
-             m01_w06 = "Nivel educacional",
-             ent_segr = "Segregación residencial",
-             ave_jane = "Vitalidad urbana",
-             ismtpn = "NSE residente",
-             ave_gse = "NSE barrio")
+             sd_segr = 'Homogeneidad residencial (sd)',
+             theil_segr = "Homogeneidad residencial (h)",
+             theil_pola = "Homogeneidad polarizada (h)",
+             jane_indx = "Vitalidad urbana",
+             jane_conc = "Concentración",
+             jane_divu = "Diversidad de usos",
+             jane_edif = "Oportunidad de contacto",
+             jane_opco = "Edificios continuos",
+             jane_acce = "Accesibilidad",
+             jane_dist = "Vacíos fronterizos",
+             ismt_rank = "NSE residente",
+             gse_zona = "NSE barrio")
 
 elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1 #estatus subjetivo de 1 a 10 (no de 0 a 10)
 ```
 
 ```{r join-espacial}
 elsoc_gs_short <- elsoc_gs %>% 
-  dplyr::select(idencuesta, comuna_w06, comuna_cod_w06, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
-         apbi, apbr, soci, socr, cnfi, comi, segu, segui=t10_w06, sacci, repb, repbi=t08_w06 , #cohesión y mecanismos
-         sexo, edad, edadi=m0_edad_w06, educ, educi=m01_w06, essu, essui=d01_01_w06, regi, time, #controles
-         theil_pola=hi_theil, ismt_rank=ismtpn, gse_zona = ave_gse, ent_mean=ENTMEAN, theil_mixt=ENTWGT, theil_segr=ent_segr, ave_jane) %>%  #desigualdad
-  mutate(nse_zonas = factor(car::recode(gse_zona, "c('AB', 'C1')=1; c('C2','C3')=2; c('D','E')=3"),
-                      labels = c("Alto", "Medio", "Bajo")),
-         jane_indx = rescale(ave_jane, to = c(0,1)))
+  dplyr::select(idencuesta, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
+         apbi, apbr, soci, socr, cnfi, comi, segu, segui, sacci, repb, repbi, desgr, desga, #cohesión y mecanismos
+         sexo, edad, edadi, educ, educi, essu, essui, regi, time, #controles
+         starts_with("theil_"), sd_segr, starts_with("jane_"), ismt_rank, gse_zona)   #desigualdad
+
 
 zonas_ams <- mapa_zonas %>% 
   filter(codigo_region == 13) %>% 
@@ -186,7 +211,7 @@ elsoc_ams2 <- dplyr::left_join(x = zonas_ams, y = elsoc_gs_short, by = "cod_zona
          !cod_zona %in% c(13401121001, 13124071001, 13124071002, 13124071004, 13124071005, 13124081001, 13124071003, 13119131001)) #quitar zonas fuera de la mancha urbana
 
 elsoc_ams_all <- elsoc_ams2 %>% 
-  dplyr::select(idencuesta, cod_manz = manzana, cod_zona, cod_prov=codigo_provincia, cod_comuna, 
+  dplyr::select(idencuesta, cod_manz=manzana, cod_zona, cod_prov=codigo_provincia, cod_comuna, 
                 comuna, cod_region=codigo_region, geometry, everything())
 ```
 
