@@ -123,7 +123,7 @@ elsoc_sub %>%
 msem_apbi <- '
 level: 1
       # Modelo estructural nivel 1
-      apbi ~ b1*repbi + b2*segui + b3*sacci + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
+      apbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
 
       # Covarianzas
       repbi ~~ segui
@@ -137,10 +137,10 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      apbi ~ b1*repbi + b2*segui + b3*sacci + b4*desgr + c1*theil_mixt + c2*ismt_rank + c3*jane_indx
-      repbi ~ a1*theil_mixt
-      segui ~ a2*theil_mixt
-      sacci ~ a3*theil_mixt
+      apbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank + c2*theil_mixt + c3*jane_indx
+      repbi ~ a1*ismt_rank
+      sacci ~ a2*ismt_rank
+      segui ~ a3*theil_mixt
       desgr ~ a4*theil_mixt
 
       # Covarianzas
@@ -151,18 +151,20 @@ level: 2
       desgr ~~ sacci
       desgr ~~ segui
       theil_mixt ~~ ismt_rank
+      theil_mixt ~~ jane_indx
+      jane_indx ~~ ismt_rank
       
       # Efecto indirecto 
-      ind_segr_repbi_apbi := a1*b1
-      ind_segr_segui_apbi := a2*b2
-      ind_segr_sacci_apbi := a3*b3
-      ind_segr_desgr_apbi := a4*b4
+      ind_ismt_repbi_apbi := a1*b1
+      ind_ismt_sacci_apbi := a2*b2
+      ind_mixt_segui_apbi := a3*b3
+      ind_mixt_desgr_apbi := a4*b4
 
       # Efecto total 
-      tot_segr_repbi_apbi := c1 + (a1*b1)
-      tot_segr_segui_apbi := c1 + (a2*b2)
-      tot_segr_sacci_apbi := c1 + (a3*b3)
-      tot_segr_desgr_apbi := c1 + (a4*b4)
+      tot_ismt_repbi_apbi := c1 + (a1*b1)
+      tot_ismt_sacci_apbi := c1 + (a2*b2)
+      tot_mixt_segui_apbi := c1 + (a3*b3)
+      tot_mixt_desgr_apbi := c1 + (a4*b4)
 '
 
 fit_msem_apbi <- sem(msem_apbi, data = elsoc_apbi, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
@@ -171,7 +173,7 @@ summary(fit_msem_apbi, fit.measures = T)
 msem_soci <- '
 level: 1
       # Modelo estructural nivel 1
-      soci ~ b1*repbi + b2*segui + b3*sacci + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
+      soci ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
 
       # Covarianzas
       repbi ~~ segui
@@ -185,10 +187,10 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      soci ~ b1*repbi + b2*segui + b3*sacci + b4*desgr + c1*theil_mixt + c2*ismt_rank + c3*jane_indx
-      repbi ~ a1*theil_mixt
-      segui ~ a2*theil_mixt
-      sacci ~ a3*theil_mixt
+      soci ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank + c2*theil_mixt + c3*jane_indx
+      repbi ~ a1*ismt_rank
+      sacci ~ a2*ismt_rank
+      segui ~ a3*theil_mixt
       desgr ~ a4*theil_mixt
 
       # Covarianzas
@@ -199,71 +201,24 @@ level: 2
       desgr ~~ sacci
       desgr ~~ segui
       theil_mixt ~~ ismt_rank
+      theil_mixt ~~ jane_indx
+      jane_indx ~~ ismt_rank
       
       # Efecto indirecto 
-      ind_segr_repbi_soci := a1*b1
-      ind_segr_segui_soci := a2*b2
-      ind_segr_sacci_soci := a3*b3
-      ind_segr_desgr_soci := a4*b4
+      ind_ismt_repbi_soci := a1*b1
+      ind_ismt_sacci_soci := a2*b2
+      ind_mixt_segui_soci := a3*b3
+      ind_mixt_desgr_soci := a4*b4
 
       # Efecto total 
-      tot_segr_repbi_soci := c1 + (a1*b1)
-      tot_segr_segui_soci := c1 + (a2*b2)
-      tot_segr_sacci_soci := c1 + (a3*b3)
-      tot_segr_desgr_soci := c1 + (a4*b4)
+      tot_ismt_repbi_soci := c1 + (a1*b1)
+      tot_ismt_sacci_soci := c1 + (a2*b2)
+      tot_mixt_segui_soci := c1 + (a3*b3)
+      tot_mixt_desgr_soci := c1 + (a4*b4)
 '
 
 fit_msem_soci <- sem(msem_soci, data = elsoc_soci, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
 #summary(fit_msem_soci, fit.measures = T)
-
-
-msem_comi <- '
-level: 1
-      # Modelo estructural nivel 1
-      comi ~ b1*repbi + b2*segui + b3*sacci + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
-
-      # Covarianzas
-      repbi ~~ segui
-      segui ~~ sacci
-      sacci ~~ repbi
-      desgr ~~ repbi
-      desgr ~~ sacci
-      desgr ~~ segui
-      educi ~~ essui
-      edadi ~~ time
-      
-level: 2
-      # Modelo estructural nivel 2
-      comi ~ b1*repbi + b2*segui + b3*sacci + b4*desgr + c1*theil_mixt + c2*ismt_rank + c3*jane_indx
-      repbi ~ a1*theil_mixt
-      segui ~ a2*theil_mixt
-      sacci ~ a3*theil_mixt
-      desgr ~ a4*theil_mixt
-
-      # Covarianzas
-      repbi ~~ segui
-      segui ~~ sacci
-      sacci ~~ repbi
-      desgr ~~ repbi
-      desgr ~~ sacci
-      desgr ~~ segui
-      theil_mixt ~~ ismt_rank
-      
-      # Efecto indirecto 
-      ind_segr_repbi_soci := a1*b1
-      ind_segr_segui_soci := a2*b2
-      ind_segr_sacci_soci := a3*b3
-      ind_segr_desgr_soci := a4*b4
-
-      # Efecto total 
-      tot_segr_repbi_comi := c1 + (a1*b1)
-      tot_segr_segui_comi := c1 + (a2*b2)
-      tot_segr_sacci_comi := c1 + (a3*b3)
-      tot_segr_desgr_comi := c1 + (a4*b4)
-'
-
-#fit_msem_comi <- sem(msem_comi, data = elsoc_comi, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
-#summary(fit_msem_comi, fit.measures = T)
 ```
 
 ```{r coef-plot-2v, warning=FALSE}
@@ -295,28 +250,27 @@ coef_msem <- coef_msem %>%
                        "soci ~ sacci" = "Satisfacción",
                        "apbi ~ desgr" = "Conflicto",
                        "soci ~ desgr" = "Conflicto",
-                       "apbi ~ theil_mixt" = "Mixtura",
-                       "soci ~ theil_mixt" = "Mixtura",
                        "apbi ~ ismt_rank" = "Nse barrio",
                        "soci ~ ismt_rank" = "Nse barrio",
+                       "apbi ~ theil_mixt" = "Mixtura",
+                       "soci ~ theil_mixt" = "Mixtura",
                        "apbi ~ jane_indx" = "Vitalidad",
                        "soci ~ jane_indx" = "Vitalidad",
-                       "ind_segr_repbi_apbi := a1*b1" = "Mixtura~\nReputación",
-                       "ind_segr_segui_apbi := a2*b2" = "Mixtura~\nSeguridad",
-                       "ind_segr_sacci_apbi := a3*b3" = "Mixtura~\nSatisfacción",
-                       "ind_segr_desgr_apbi := a4*b4" = "Mixtura~\nConflicto",
-                       "ind_segr_desga_apbi := a4*b5" = "Mixtura~\nActividades",
-                       "ind_segr_repbi_soci := a1*b1" = "Mixtura~\nReputación",
-                       "ind_segr_segui_soci := a2*b2" = "Mixtura~\nSeguridad",
-                       "ind_segr_sacci_soci := a3*b3" = "Mixtura~\nSatisfacción",
-                       "ind_segr_desgr_soci := a4*b4" = "Mixtura~\nConflicto",
-                       "ind_segr_desga_soci := a4*b5" = "Mixtura~\nActividades"))
+                       "ind_ismt_repbi_apbi := a1*b1" = "Nse barrio~\nReputación",
+                       "ind_ismt_sacci_apbi := a2*b2" = "Nse barrio~\nSatisfacción",
+                       "ind_mixt_segui_apbi := a3*b3" = "Mixtura~\nSeguridad",
+                       "ind_mixt_desgr_apbi := a4*b4" = "Mixtura~\nConflicto",
+
+                       "ind_ismt_repbi_soci := a1*b1" = "Nse barrio~\nReputación",
+                       "ind_ismt_sacci_soci := a2*b2" = "Nse barrio~\nSatisfacción",
+                       "ind_mixt_segui_soci := a3*b3" = "Mixtura~\nSeguridad",
+                       "ind_mixt_desgr_soci := a4*b4" = "Mixtura~\nConflicto"))
 
 coef_plot <- coef_msem %>% 
-  ggplot(aes(x = factor(term, levels = c('Mixtura', 'Nse barrio', 'Vitalidad',
+  ggplot(aes(x = factor(term, levels = c('Nse barrio', 'Mixtura', 'Vitalidad',
                                          'Reputación', 'Satisfacción', 'Seguridad', 'Conflicto',
-                                         'Mixtura~\nReputación', 'Mixtura~\nSeguridad',
-                                         'Mixtura~\nSatisfacción', 'Mixtura~\nConflicto')), 
+                                         'Nse barrio~\nReputación', 'Nse barrio~\nSatisfacción',
+                                         'Mixtura~\nSeguridad', 'Mixtura~\nConflicto')), 
            y = estimate)) +
   geom_hline(yintercept = 0, color = 'red') +
   geom_point(position = position_dodge(width = -0.6), size = 3) +
@@ -335,7 +289,7 @@ coef_plot <- coef_msem %>%
 
 coef_plot 
 
-#ggsave(coef_plot,filename = "../3_output/graficos/coef_plot_seg_cob.png", width = 8, height = 6, dpi = 300)
+ggsave(coef_plot,filename = "../3_output/graficos/coef_plot_mixt_cob.png", width = 8, height = 6, dpi = 300)
 ```
 
 ```{r msem-table-apbi-soci}
@@ -373,102 +327,9 @@ ajust_soci <- fitMeasures(fit_msem_soci, c("chisq", "cfi","rmsea","srmr")) %>%
 lavInspect(fit_msem_soci, "icc")
 ```
 
-
-```{r coef-plot-3v, warning=FALSE}
-# apbi
-coef_apbi <-
-  broom::tidy(fit_msem_apbi, conf.int = TRUE, conf.level = 0.95) %>%
-  filter(!level == 1) %>% 
-  filter(op %in% c("~", ":="), !str_detect(term, "^tot_"), !str_detect(label, "^a")) %>% 
-  data_frame(var = c(rep("Pertenencia"))) %>% 
-  dplyr::select(var, term, estimate, conf.low, conf.high)
-
-# soci
-coef_soci <-
-  broom::tidy(fit_msem_soci, conf.int = TRUE, conf.level = 0.95) %>%
-  filter(!level == 1) %>%    
-  filter(op %in% c("~", ":="), !str_detect(term, "^tot_"), !str_detect(label, "^a")) %>% 
-  data_frame(var = c(rep("Sociabilidad"))) %>% 
-  dplyr::select(var, term, estimate, conf.low, conf.high)
-
-coef_comi <-
-  broom::tidy(fit_msem_comi, conf.int = TRUE, conf.level = 0.95) %>%
-  filter(!level == 1) %>%    
-  filter(op %in% c("~", ":="), !str_detect(term, "^tot_"), !str_detect(label, "^a")) %>% 
-  data_frame(var = c(rep("Compromiso"))) %>% 
-  dplyr::select(var, term, estimate, conf.low, conf.high)
-
-coef_msem <- rbind(coef_apbi, coef_soci, coef_comi)
-
-coef_msem <- coef_msem %>% 
-  mutate(term = recode(term, 
-                       "apbi ~ repbi" = "Reputación",
-                       "soci ~ repbi" = "Reputación",
-                       "comi ~ repbi" = "Reputación",
-                       "apbi ~ segui" = "Seguridad",
-                       "soci ~ segui" = "Seguridad",
-                       "comi ~ segui" = "Seguridad",
-                       "apbi ~ sacci" = "Satisfacción",
-                       "soci ~ sacci" = "Satisfacción",
-                       "comi ~ sacci" = "Satisfacción",
-                       "apbi ~ desgr" = "Conflicto",
-                       "soci ~ desgr" = "Conflicto",
-                       "comi ~ desgr" = "Conflicto",
-                       "apbi ~ theil_mixt" = "Mixtura",
-                       "soci ~ theil_mixt" = "Mixtura",
-                       "comi ~ theil_mixt" = "Mixtura",
-                       "apbi ~ sd_segr" = "Homogeneidad",
-                       "soci ~ sd_segr" = "Homogeneidad",
-                       "comi ~ sd_segr" = "Homogeneidad",
-                       "apbi ~ jane_indx" = "Vitalidad",
-                       "soci ~ jane_indx" = "Vitalidad",
-                       "comi ~ jane_indx" = "Vitalidad",
-                       "ind_segr_repbi_apbi := a1*b1" = "Mixtura~\nReputación",
-                       "ind_segr_segui_apbi := a2*b2" = "Mixtura~\nSeguridad",
-                       "ind_segr_sacci_apbi := a3*b3" = "Mixtura~\nSatisfacción",
-                       "ind_segr_desgr_apbi := a4*b4" = "Mixtura~\nConflicto",
-                       "ind_segr_desga_apbi := a4*b5" = "Mixtura~\nActividades",
-                       "ind_segr_repbi_soci := a1*b1" = "Mixtura~\nReputación",
-                       "ind_segr_segui_soci := a2*b2" = "Mixtura~\nSeguridad",
-                       "ind_segr_sacci_soci := a3*b3" = "Mixtura~\nSatisfacción",
-                       "ind_segr_desgr_soci := a4*b4" = "Mixtura~\nConflicto",
-                       "ind_segr_desga_soci := a4*b5" = "Mixtura~\nActividades",
-                       "ind_segr_repbi_comi := a1*b1" = "Mixtura~\nReputación",
-                       "ind_segr_segui_comi := a2*b2" = "Mixtura~\nSeguridad",
-                       "ind_segr_sacci_comi := a3*b3" = "Mixtura~\nSatisfacción",
-                       "ind_segr_desgr_comi := a4*b4" = "Mixtura~\nConflicto",
-                       "ind_segr_desga_comi := a4*b5" = "Mixtura~\nActividades"))
-
-coef_plot <- coef_msem %>% 
-  ggplot(aes(x = factor(term, levels = c('Reputación', 'Satisfacción', 'Seguridad', 'Conflicto',
-                                         "Mixtura", 'Homogeneidad', "Vitalidad", 
-                                         'Mixtura~\nReputación', 'Mixtura~\nSeguridad',
-                                         'Mixtura~\nSatisfacción', 'Mixtura~\nConflicto')), 
-           y = estimate)) +
-  geom_hline(yintercept = 0, color = 'red') +
-  geom_point(position = position_dodge(width = -0.6), size = 3) +
-  geom_linerange(aes(ymin = conf.low, ymax = conf.high),
-                 position = position_dodge(width = -0.6), 
-                 size = .8) +
-  coord_flip() +
-  facet_wrap(.~ var) +
-  theme(axis.text = element_text(size =  12),
-        axis.title = element_text(size = 12, face = "bold"),
-        strip.text = element_text(size = 12, face = "bold")) +
-  labs(title = "",
-       x = "",
-       y = "Coeficientes estandarizados") +
-  scale_x_discrete(limits = rev)
-
-coef_plot 
-
-#ggsave(coef_plot,filename = "../3_output/graficos/coef_plot_seg_cob.png", width = 8, height = 6, dpi = 300)
-```
-
-
 ## Save models
 ```{r save-models}
-save(fit_msem_apbi, fit_msem_soci, file = "../3_output/modelos/sem_models.RData")
+#save(fit_msem_apbi, fit_msem_soci, file = "../3_output/modelos/sem_models.RData")
 
 #save(fit_sem_apbi_low, fit_sem_apbi_middle, fit_sem_apbi_high, fit_sem_soci_low, fit_sem_soci_middle, fit_sem_soci_high, file = "../3_output/modelos/sem_models_gse.RData")
 ```

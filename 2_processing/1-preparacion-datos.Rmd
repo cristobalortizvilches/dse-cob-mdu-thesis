@@ -173,6 +173,7 @@ elsoc_gs <- elsoc_gs %>%
              sd_segr = 'Homogeneidad residencial (sd)',
              theil_segr = "Homogeneidad residencial (h)",
              theil_pola = "Homogeneidad polarizada (h)",
+             theil_mixt = "Heterogeneidad residencial (h)",
              jane_indx = "Vitalidad urbana",
              jane_conc = "Concentración",
              jane_divu = "Diversidad de usos",
