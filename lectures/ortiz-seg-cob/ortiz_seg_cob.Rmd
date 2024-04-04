@@ -134,10 +134,8 @@ knitr::include_graphics('./img/blank_space.png')
 
 <br>
 
-```{r echo=FALSE, out.width = '30%'}
-knitr::include_graphics('./img/blank_space.png')
+```{r echo=FALSE, out.width = '50%'}
 knitr::include_graphics('./img/coes-logo.png')
-knitr::include_graphics('./img/blank_space.png')
 ```
 
 ---

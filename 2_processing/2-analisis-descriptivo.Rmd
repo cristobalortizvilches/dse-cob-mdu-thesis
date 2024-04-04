@@ -49,6 +49,8 @@ elsoc_mean_zonas <- elsoc_ams %>%
                 theil_pola, ismt_rank, theil_mixt, theil_segr, jane_indx) %>% 
   summarise_all(mean, na.rm = T)
 
+q <- quantile(elsoc_mean_zonas$theil_mixt)
+
 elsoc_mean_zonas <- elsoc_mean_zonas %>% 
   mutate(gse_zona = factor(with(elsoc_mean_zonas, case_when(ismt_rank > 0.7325960 ~ 1,
                                                             ismt_rank > 0.5144 ~ 2,
@@ -64,7 +66,10 @@ elsoc_mean_zonas <- elsoc_mean_zonas %>%
                                                                jane_indx > 0.1148 ~ 2,
                                                                jane_indx <= 0.1148 ~ 3)),
                            labels = c('Vitalidad baja', 'Vitalidad media', 'Vitalidad alta'),
-                           levels = c(3,2,1)))
+                           levels = c(3,2,1)),
+         theil_mixt_f = factor(cut(theil_mixt, breaks = c(-Inf, q[2], q[3], q[4], Inf), 
+                                   labels = c("Q1", "Q2", "Q3", "Q4"),
+                                   levels = 1:4)))
 ```
 # Descriptivo general
 
@@ -456,6 +461,20 @@ ggsave(scatter_segr_cob,filename = "../3_output/graficos/scat-homo-cob.svg", wid
 scatter_segr_cob
 ```
 
+```{r}
+elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = theil_mixt)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm",se = F, size = 0.8) +
+  labs(x = "Nse", 
+       y = "Mixtura") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) 
+
+```
+
 ## H2: vitalidad->cohesión & vitalidad->ms~cohesion
 ```{r scat-jane}
 scat_apbi_jane <- elsoc_mean_zonas %>% 
@@ -495,6 +514,45 @@ scatter_jane_cob <- ggarrange(scat_apbi_jane, scat_soci_jane,  ncol = 2, common.
 ggsave(scatter_jane_cob,filename = "../3_output/graficos/scat-vita-cob.svg", width = 10, height = 4)
 scatter_jane_cob
 ```
+
+```{r}
+scat_apbi_nse <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = apbi, color = theil_mixt_f)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  #geom_smooth(se = F, size = 1.5) +
+  geom_smooth(aes(x = ismt_rank, y = apbi), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Nse barrio", 
+       y = "Pertenencia",
+       color = "Mixtura") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+
+scat_soci_nse <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = soci, color = theil_mixt_f)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  #geom_smooth(se = F, size = 1.5) +
+  geom_smooth(aes(x = ismt_rank, y = soci), 
+              method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Nse barrio", 
+       y = "Sociabilidad",
+       color = "Mixtura") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+
+scatter_nse_cob <- ggarrange(scat_apbi_nse, scat_soci_nse, ncol = 2, common.legend = TRUE, legend="top")
+ggsave(scatter_nse_cob,filename = "../3_output/graficos/scat-nse-cob.png", width = 10, height = 4)
+scatter_nse_cob
+```
+
 
 ### H1.1 & H1.2
 ```{r scat-segr-ms}
