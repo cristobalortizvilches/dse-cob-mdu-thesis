@@ -86,7 +86,7 @@ elsoc_gs[elsoc_gs == -888 | elsoc_gs == -999 | elsoc_gs == 994 | elsoc_gs == 995
 
 ```{r manipulate-variables}
 elsoc_gs <- elsoc_gs %>% 
-  remove_all_labels() %>%
+  #remove_all_labels() %>%
   #-----Recode Y: cohesión barrial
   mutate(apbi = rowMeans(select(., starts_with("t02_")), na.rm = TRUE),
          soci = rowMeans(select(., starts_with("t03_")), na.rm = TRUE),
@@ -177,8 +177,8 @@ elsoc_gs <- elsoc_gs %>%
              jane_indx = "Vitalidad urbana",
              jane_conc = "Concentración",
              jane_divu = "Diversidad de usos",
-             jane_edif = "Oportunidad de contacto",
-             jane_opco = "Edificios continuos",
+             jane_opco = "Oportunidad de contacto",
+             jane_edif = "Edificios continuos",
              jane_acce = "Accesibilidad",
              jane_dist = "Vacíos fronterizos",
              ismt_rank = "NSE residente",
@@ -191,6 +191,7 @@ elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1 #estatus subjetivo de 1 a 10 
 elsoc_gs_short <- elsoc_gs %>% 
   dplyr::select(idencuesta, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
          apbi, apbr, soci, socr, cnfi, comi, segu, segui, sacci, repb, repbi, desgr, desga, #cohesión y mecanismos
+         starts_with("t06_"),
          sexo, edad, edadi, educ, educi, essu, essui, regi, time, #controles
          starts_with("theil_"), sd_segr, starts_with("jane_"), ismt_rank, gse_zona)   #desigualdad
 
