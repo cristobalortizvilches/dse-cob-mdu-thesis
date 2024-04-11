@@ -18,6 +18,7 @@ library(vtable)
 library(psych)
 library(sjPlot)
 library(cowplot)
+library(broom.mixed)
 ```
 
 ```{r load-dataset-proc, include=FALSE}
@@ -42,11 +43,11 @@ elsoc_sub <- elsoc_ams %>%
 #modelo nulo cod_zona
 mod_0_zon = lmer(apbi ~ 1 + (1 | cod_zona), data = elsoc_ams)
 #modelo con predictores individuales
-mod_1_zon = lmer(apbi ~ 1 + t06_01_w06 + t06_02_w06 + t06_03_w06 + t06_04_w06 + t06_05_w06 + t06_06_w06 + t06_07_w06 + t06_08_w06 + repbi + segui + edadi + educi + time + (1 | cod_zona), data = elsoc_ams)
+mod_1_zon = lmer(apbi ~ 1 + t06_01_w06 + t06_02_w06 + t06_03_w06 + t06_04_w06 + t06_05_w06 + t06_06_w06 + t06_07_w06 + t06_08_w06 + repbi + edadi + educi + time + (1 | cod_zona), data = elsoc_ams)
 #modelo con predictores contextuales
 mod_2_zon = lmer(apbi ~ 1 + jane_conc + jane_divu + jane_edif + jane_opco + jane_acce + jane_dist + ismt_rank + (1 | cod_zona), data = elsoc_ams)
 #modelo con predictores individuales y contextuales (multinivel)
-mod_3_zon = lmer(apbi ~ 1 + t06_01_w06 + t06_02_w06 + t06_03_w06 + t06_04_w06 + t06_05_w06 + t06_06_w06 + t06_07_w06 + t06_08_w06 + repbi + segui + edadi + educi + time + jane_conc + jane_divu + jane_edif + jane_opco + jane_acce + jane_dist + ismt_rank + (1 | cod_zona), data = elsoc_ams)
+mod_3_zon = lmer(apbi ~ 1 + t06_01_w06 + t06_02_w06 + t06_03_w06 + t06_04_w06 + t06_05_w06 + t06_06_w06 + t06_07_w06 + t06_08_w06 + repbi + edadi + educi + time + jane_conc + jane_divu + jane_edif + jane_opco + jane_acce + jane_dist + ismt_rank + (1 | cod_zona), data = elsoc_ams)
 
 #screenreg(list(mod_0_zon,mod_1_zon,mod_2_zon,mod_3_zon))
 ```
@@ -55,9 +56,53 @@ mod_3_zon = lmer(apbi ~ 1 + t06_01_w06 + t06_02_w06 + t06_03_w06 + t06_04_w06 + 
 #comparación gráfica de modelos
 htmlreg(list(mod_0_zon,mod_1_zon,mod_2_zon,mod_3_zon), file = "../3_output/tablas/mlm_vit_cob.doc",
         custom.model.names = c("Modelo Nulo","Modelo Individual", "Modelo Contextual", "Modelo Multinivel"),
-    caption.above = T,
-    digits = 3)
+        caption.above = T,
+        digits = 3)
 ```
+
+```{r}
+coef_apbi <-
+  broom.mixed::tidy(mod_3_zon, conf.int = T) %>% 
+  filter(effect == "fixed",
+         !term %in% c("edadi", "educi", "time", "(Intercept)")) 
+
+coef_apbi <- coef_apbi %>% 
+  mutate(term = recode(term, 
+                       "t06_01_w06" = "Seguridad","t06_02_w06" = "Conectividad",
+                       "t06_03_w06" = "Areas verdes","t06_04_w06" = "Limpieza",
+                       "t06_05_w06" = "Proximidad a\nprincipal actividad","t06_06_w06" = "Proximidad a\nbuenos colegios",
+                       "t06_07_w06" = "Proximidad a\ncomercios","t06_08_w06" = "Proximidad a\nredes cercanas",
+                       "repbi" = "Reputación", "edadi" = "Edad", "educi" = "Escolaridad", "time" = "Tiempo residencia", 
+                       "jane_conc" = "Concentración", "jane_divu" = "Diversidad usos", "jane_edif" = "Edificios antiguos", 
+                       "jane_opco" = "Oportunidades\nde contacto", "jane_acce" = "Accesibilidad", "jane_dist" = "Vacíos fronterizos", 
+                       "ismt_rank" = "Nse barrio"))
+
+coef_plot <- coef_apbi %>% 
+  ggplot(aes(x = factor(term, levels = c("Seguridad", "Conectividad", "Areas verdes", "Limpieza",  "Proximidad a\nprincipal actividad", 
+                                         "Proximidad a\nbuenos colegios", "Proximidad a\ncomercios", "Proximidad a\nredes cercanas", "Reputación",
+                                         "Concentración", "Diversidad usos",  "Edificios antiguos", "Oportunidades\nde contacto", "Accesibilidad", 
+                                         "Vacíos fronterizos", "Nse barrio")), 
+             y = estimate)) +
+  geom_hline(yintercept = 0, color = 'red') +
+  geom_point(position = position_dodge(width = -0.6), size = 3) +
+  geom_linerange(aes(ymin = conf.low, ymax = conf.high),
+                 position = position_dodge(width = -0.6), 
+                 size = .8) +
+  coord_flip() +
+  #facet_wrap(.~ var) +
+  theme(axis.text = element_text(size =  12),
+        axis.title = element_text(size = 12, face = "bold"),
+        strip.text = element_text(size = 12, face = "bold")) +
+  labs(title = "",
+       x = "",
+       y = "Coeficientes estandarizados") +
+  scale_x_discrete(limits = rev)
+
+coef_plot 
+
+ggsave(coef_plot,filename = "../3_output/graficos/coef-plot-mlm-vit-cob.png", width = 8, height = 8, dpi = 300)
+```
+
 
 
 ### *Bondad de Ajuste del Modelo*

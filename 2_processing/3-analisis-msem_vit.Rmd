@@ -42,30 +42,33 @@ load("../1_input/data/procesada/elsoc_ams.RData")
 elsoc_sub <- elsoc_ams %>% 
   dplyr::select(idencuesta, cod_zona, 
                 apbi, soci, 
-                segui, repbi, sacci, 
+                starts_with("t02_"), starts_with("t03_"),
                 starts_with("t06_"),
                 edadi, educi, essui, time,  
                 ismt_rank, ismt_rank, gse_zona, theil_mixt, theil_segr, jane_indx) %>% 
-  drop_na()
+  drop_na() %>% 
+  rename(#pertenencia
+         "spb1" = "t02_01_w06",
+         "spb2" = "t02_02_w06",
+         "spb3" = "t02_03_w06",
+         "spb4" = "t02_04_w06",
+         #sociabilidad
+         "soc1" = "t03_01_w06",
+         "soc2" = "t03_02_w06",
+         "soc3" = "t03_03_w06",
+         "soc4" = "t03_04_w06",
+         #satisfacción
+         "sat1" = "t06_01_w06",
+         "sat2" = "t06_02_w06",
+         "sat3" = "t06_03_w06",
+         "sat4" = "t06_04_w06",
+         "sat5" = "t06_05_w06",
+         "sat6" = "t06_06_w06",
+         "sat7" = "t06_07_w06",
+         "sat8" = "t06_08_w06")
 ```
 
 ```{r correlations}
-elsoc_sub %>% 
-  dplyr::select( starts_with("t06_")) %>% 
-  psych::pairs.panels(smooth = TRUE,      # If TRUE, draws loess smooths
-             scale = FALSE,      # If TRUE, scales the correlation text font
-             density = TRUE,     # If TRUE, adds density plots and histograms
-             ellipses = F,       # If TRUE, draws ellipses
-             method = "pearson", # Correlation method (also "spearman" or "kendall")
-             pch = 21,           # pch symbol
-             lm = TRUE,          # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
-             cor = TRUE,         # If TRUE, reports correlations
-             jiggle = FALSE,     # If TRUE, data points are jittered
-             factor = 2,         # Jittering factor
-             hist.col = 4,       # Histograms color
-             stars = TRUE,       # If TRUE, adds significance level with stars
-             ci = TRUE)          # If TRUE, adds confidence intervals
-
 elsoc_sub %>% 
   dplyr::select(theil_pola, ismt_rank, theil_mixt, theil_segr, jane_indx) %>% 
   psych::pairs.panels(smooth = TRUE,      # If TRUE, draws loess smooths
@@ -85,8 +88,55 @@ elsoc_sub %>%
 
 # Modelos de ecuaciones estructurales (análisis de senderos multinivel)
 
-## Mediación Multinivel: upper-level mediation (2-1-1)
+## Análisis factorial confirmatorio (CFA)
+```{r cfa-model}
+sem1 <- '
+# Latent variables
+pertenencia =~ spb1 + spb2 + spb3 + spb4
+sociabilidad =~ soc1 + soc2 + soc3 + soc4
 
+satisfaccion =~ sat1 + sat2 + sat3 + sat4 + sat5 + sat6 + sat7 + sat8 
+
+# Structural Model
+pertenencia ~  satisfaccion 
+sociabilidad ~ satisfaccion 
+
+## Covarianzas
+pertenencia ~~ sociabilidad
+'
+
+fitsem_1 <- sem(sem1, data = elsoc_sub, ordered = T)
+#missing="fiml"
+summary(fitsem_1, standardized = TRUE)
+```
+
+```{r cfa-table}
+semTable(fitsem_1, type = "html",
+         file = "resultados_cfa2",
+         paramSets = c("loadings", "latentcovariances", "fits"))
+```
+
+```{r cfa-paths}
+
+semPaths(fitsem_1, whatLabels = "est.std", intercepts = FALSE, nCharNodes = 0, edge.label.cex = 0.75, rotation = 2, residuals = F)
+
+```
+```{r}
+my_position_list <- c("x4 ~ x1" = .75)
+my_curve_list <- c("x2 ~ x1" = -2)
+my_rotate_resid_list <- c(x1 = 0, x2 = 180, x3 = 140, x4 = 140)
+my_position_list <- c("x4 ~ x1" = .65)
+# If R version 4.1.0 or above
+p_pa3 <- p_pa |> set_curve(my_curve_list) |>
+                  rotate_resid(my_rotate_resid_list) |>
+                  mark_sig(fit_pa) |>
+                  mark_se(fit_pa, sep = "\n") |>
+                  set_edge_label_position(my_position_list)
+plot(p_pa3)
+```
+
+
+## Mediación Multinivel: upper-level mediation (2-1-1)
 ```{r msem-model-apbi-soci, warning=FALSE}
 msem_apbi <- '
 level: 1
@@ -126,7 +176,7 @@ level: 2
       tot_jane_segui_apbi := c2 + (a4*b3)
 '
 
-fit_msem_apbi <- sem(msem_apbi, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
+fit_msem_apbi <- sem(msem_apbi, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, fit.measures = TRUE, standardized = TRUE, optim.method = "em")
 summary(fit_msem_apbi, fit.measures = T)
 
 msem_soci <- '
@@ -167,7 +217,7 @@ level: 2
       tot_jane_segui_soci := c2 + (a4*b3)
 '
 
-fit_msem_soci <- sem(msem_soci, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
+fit_msem_soci <- sem(msem_soci, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, fit.measures = TRUE, standardized = TRUE, optim.method = "em")
 #summary(fit_msem_soci, fit.measures = T)
 ```
 

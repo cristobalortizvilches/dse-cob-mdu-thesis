@@ -1,0 +1,636 @@
+---
+title: "Código de Análisis de Datos"
+author: "Cristóbal Ortiz"
+date: "08-10-2021"
+output: html_document
+---
+
+```{r load-library, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(sjPlot)
+library(gstat)
+library(raster)
+library(rgdal)
+library(rworldxtra)
+library(sf)
+library(sp)
+library(rgeoda)
+library(chilemapas)
+library(mapview)
+library(viridis)
+library(elsoc)
+library(sjlabelled)
+library(ggpubr)
+library(corrplot)
+library(GGally)
+library(psych)
+library(sjmisc)
+```
+
+```{r load-dataset}
+remove(list = ls())
+load("../1_input/data/procesada/elsoc_ams.RData")
+load("../1_input/data/procesada/elsoc_ams_all.RData")
+
+load("../1_input/data/procesada/elsoc_ams_geo.RData")
+load("../1_input/data/procesada/elsoc_ams_all_geo.RData")
+
+load(url("https://dataverse.harvard.edu/api/access/datafile/7245118"))
+elsoc_long <- elsoc_long_2016_2022.2
+```
+
+```{r summarise-dataset, message=TRUE, warning=FALSE}
+elsoc_mean_zonas <- elsoc_ams %>% 
+  group_by(cod_zona) %>% 
+  dplyr::select(idencuesta, cod_zona, 
+                spbi, soci, 
+                repbi, sacci, segui, 
+                edadi, educi, essui, time, ismt_rank) %>% 
+  summarise_all(mean, na.rm = T)
+
+#q <- quantile(elsoc_mean_zonas$theil_mixt)
+#theil_mixt_f = factor(cut(theil_mixt, breaks = c(-Inf, q[2], q[3], q[4], Inf), labels = c("Q1", "Q2", "Q3", "Q4"), levels = 1:4))
+
+elsoc_mean_zonas <- elsoc_mean_zonas %>% 
+  mutate(gse_zona = factor(with(elsoc_mean_zonas, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                            ismt_rank > 0.5144 ~ 2,
+                                                            ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3)))
+```
+# Descriptivo general
+
+```{r desc-table}
+#elsoc_ams2 <- elsoc_ams %>% dplyr::select(-geometry)
+#a <- summarytools::dfSummary(elsoc_ams2, style = "grid")
+
+elsoc_long_2022 <- elsoc_long %>% 
+  filter(ola == 1, !is_nsnr(t02_01, t02_02, t02_03, t02_04, t03_01, t03_02, t03_03, t03_04, t06_02, t06_05, t06_06, t06_07))
+
+alfa_spbi <- psych::alpha(dplyr::select(elsoc_long_2022, t02_01, t02_02, t02_03, t02_04)) 
+alfa_soci <- psych::alpha(dplyr::select(elsoc_long_2022, t03_01, t03_02, t03_03, t03_04))
+alfa_sacci <- psych::alpha(dplyr::select(elsoc_long_2022, t06_02, t06_05, t06_06, t06_07))
+
+alfa_cron <- c(alfa_spbi[[1]][,1], alfa_soci[[1]][,1], rep("", 2), alfa_sacci[[1]][,1], rep("", 14)) %>% 
+  as.numeric() %>% 
+  round(digits = 2)
+
+elsoc_desc <- elsoc_ams %>% 
+  dplyr::select(spbi, soci, 
+                repbi, segui, sacci, 
+                edadi, educi, essui, time,
+                theil_segr, jane_indx, ismt_rank, gse_zona)
+
+# tabla descriptivos
+desc_table <- vtable::sumtable(elsoc_desc, 
+                       digits = 2, out = "return", labels = TRUE,
+                       summ = c('notNA(x)','mean(x)','sd(x)','min(x)','max(x)'),
+                       summ.names = c('N Válidos','Media/Porcentaje','SD','Mínimo','Máximo')) %>% 
+  mutate("Cronbach" = alfa_cron) #agregamos vector cronbach
+
+desc_table$Variable[desc_table$Variable == "gse_zona"] <- "NSE barrio" #cambiamos manualmente este porfíao que no tomó la etiqueta
+
+desc_table$Cronbach[is.na(desc_table$Cronbach)] <- '' #convertimos los NA en espacios vacíos
+
+write.xlsx(desc_table, file = "../3_output/tablas/desc_table.xlsx", sheetName = 'data', row.names=FALSE) #guardamos
+```
+
+
+# Análisis univariado
+
+
+```{r cob-estrato}
+bar_spbi <- elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% c(1,6), !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
+  mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
+         spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
+         estrato = factor(estrato, levels = c(1,2,3,4,5,6),
+                          labels = c('Gran\nSantiago', 'Gran\nValparaíso', 'Gran\nConcepción',
+                                     'Ciudades\ngrandes', 'Ciudades\nmedianas', 'Ciudades\npequeñas'))) %>% 
+  prop(x = spb_rec, by = c(ola, estrato), na.rm = TRUE) %>% 
+  as_label(ola) %>% 
+  filter(spb_rec == "Niveles altos") %>% 
+  ggplot(aes(y = prop, x = estrato, fill = ola, 
+             label = as.character(scales::percent(prop, accuracy = .1)))) + 
+  geom_col(position = 'dodge') +
+  geom_errorbar(aes(ymin = prop - prop_se, ymax = prop + prop_se), 
+                position = position_dodge(0.9), width = .2) +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0, 1)) +
+  scale_fill_viridis_d(begin = .22, end = .88, direction = -1) +
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        axis.text.x = element_text(size = 12)) +
+  geom_text(position = position_dodge(0.9), vjust = -4, size = 3) +
+  labs(x = NULL, y = NULL,
+       title = 'Nivel de pertenencia al barrio según ola y tipo de ciudad',
+       subtitle = 'Porcentaje con niveles altos (>3.75)')
+
+bar_soci <- elsoc_long %>% 
+  filter(tipo_atricion == 1 & ola %in% c(1,6), !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
+  mutate(soci = (t03_01 + t03_02 + t03_03 + t03_04)/4,
+         soci_rec = factor(cut(soci, breaks = c(0,2.75,3.75,5)),
+                                  labels = c("Niveles bajos","Niveles intermedios","Niveles altos")),
+         estrato = factor(estrato, levels = c(1,2,3,4,5,6),
+                          labels = c('Gran\nSantiago', 'Gran\nValparaíso', 'Gran\nConcepción',
+                                     'Ciudades\ngrandes', 'Ciudades\nmedianas', 'Ciudades\npequeñas'))) %>% 
+  prop(x = soci_rec, by = c(ola, estrato), na.rm = TRUE) %>% 
+  as_label(ola) %>% 
+  filter(soci_rec == "Niveles altos") %>% 
+  ggplot(aes(y = prop, x = estrato, fill = ola, 
+             label = as.character(scales::percent(prop, accuracy = .1)))) + 
+  geom_col(position = 'dodge2') +
+  geom_errorbar(aes(ymin = prop - prop_se, ymax = prop + prop_se), 
+                position = position_dodge(0.9), width = .2) +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0, 1)) +
+  scale_fill_viridis_d(begin = .22, end = .88, direction = -1) +
+  theme(plot.caption = element_text(hjust = 0),
+        legend.position = 'top',
+        legend.title = element_blank(),
+        axis.text.x = element_text(size = 12)) +
+  geom_text(position = position_dodge(0.9), vjust = -4, size = 3) +
+  labs(x = NULL, y = NULL,
+       title = 'Nivel de sociabilidad barrial según ola y tipo de ciudad',
+       subtitle = 'Porcentaje con niveles altos (>3.75)') 
+
+bar_cob <- gridExtra::grid.arrange(bar_spbi, bar_soci,  ncol = 2)
+#ggsave(bar_cob,filename = "../3_output/graficos/1_bar_cob.png", width = 12, height = 6 , dpi = 300)
+
+```
+
+```{r boxplot-cob-gse}
+boxplot_spbi <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                     ismt_rank > 0.5144 ~ 2,
+                                                     ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = gse_zona, y = spbi, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = mean(elsoc_ams$spbi, na.rm = T), color = 'red') +
+  geom_text(aes(0, mean(elsoc_ams$spbi, na.rm = T), label = "x̅ = 3.5", vjust = -1, hjust =-0.2), size = 3) +
+    labs(x = "", 
+         y = "Pertenencia barrial",
+         fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text.x = element_text(size = 12)) +
+  scale_fill_viridis(discrete = TRUE, option = "D") 
+
+boxplot_soci <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                     ismt_rank > 0.5144 ~ 2,
+                                                     ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = gse_zona, y = soci, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = mean(elsoc_ams$soci, na.rm = T), color = 'red') +
+  geom_text(aes(0, mean(elsoc_ams$soci, na.rm = T), label = "x̅ = 3.4", vjust = -1, hjust =-0.2), size = 3) +
+    labs(x = "", 
+         y = "Sociabilidad barrial",
+         fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text.x = element_text(size = 12)) +
+  scale_fill_viridis(discrete = TRUE, option = "D") 
+
+boxplot_cob <- ggarrange(boxplot_spbi, boxplot_soci, nrow = 1, align = "hv", common.legend = TRUE, legend = "top")
+
+ggsave(boxplot_cob,filename = "../3_output/graficos/boxplot_cob.png", width = 8, height = 6, dpi = 300)
+
+```
+
+
+```{r boxplot-cob-gse-comuna}
+elsoc_comunas <-  elsoc_ams %>% 
+  group_by(comuna) %>% 
+  dplyr::select(ismt_rank) %>% 
+  summarise_all(mean, na.rm = T) 
+
+elsoc_comunas <- elsoc_comunas %>% 
+  mutate(ismt_label = str_sub(ismt_rank, start = 1, -13)) %>% 
+  mutate(labels = paste0(comuna," (",ismt_label,")")) %>% 
+  dplyr::select(labels, ismt_rank) %>% 
+  arrange(ismt_rank)
+
+boxplot_spbi_gse <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                     ismt_rank > 0.5144 ~ 2,
+                                                     ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = factor(reorder(comuna, ismt_rank),labels = elsoc_comunas$labels), y = spbi, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 3.5, color = 'red') +
+    labs(x = "Comuna (Promedio ISMT)", 
+       y = "Pertenencia barrial",
+       fill = "NSE Barrio") +
+  theme(legend.position = "none",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_fill_viridis(discrete = TRUE, option = "D") +
+  facet_wrap(.~gse_zona) +
+  coord_flip()
+
+boxplot_soci_gse <- elsoc_ams %>% 
+  mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
+                                                            ismt_rank > 0.5144 ~ 2,
+                                                            ismt_rank <= 0.5144 ~ 3)),
+                           labels = c('Alto', 'Medio', 'Bajo'),
+                           levels = c(1,2,3))) %>% 
+  ggplot(aes(x = reorder(comuna, ismt_rank), 
+             y = soci, fill = gse_zona)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 3.5, color = 'red') +
+    labs(x = "", 
+       y = "Sociabilidad barrial",
+       fill = "NSE Barrio") +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.y = element_blank()) +
+  scale_fill_viridis(discrete = TRUE, option = "D") +
+  facet_wrap(.~gse_zona) +
+  coord_flip()
+
+boxplot_cob_gse <- ggarrange(boxplot_spbi_gse, boxplot_soci_gse, nrow = 1, align = "hv")
+
+ggsave(boxplot_cob_gse, filename = "../3_output/graficos/boxplot_cob_gse.png", width = 10, height = 5 , dpi = 300)
+
+```
+
+```{r boxplot-cob-gse-dse}
+boxplot_spbi_segr <- elsoc_mean_zonas %>% 
+  ggplot(aes(y = spbi, x = theil_segr_f, fill = gse_zona)) +
+  geom_boxplot() +
+  labs(x = "", 
+       y = "Pertenencia",
+       fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_fill_viridis(discrete = TRUE, option = "D")
+
+boxplot_soci_segr <- elsoc_mean_zonas %>% 
+  ggplot(aes(y = soci, x = theil_segr_f, fill = gse_zona)) +
+  geom_boxplot() +
+  labs(x = "", 
+       y = "Sociabilidad",
+       fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_fill_viridis(discrete = TRUE, option = "D")
+
+boxplot_spbi_jane <- elsoc_mean_zonas %>% 
+  ggplot(aes(y = spbi, x = jane_indx_f, fill = gse_zona)) +
+  geom_boxplot() +
+  labs(x = "", 
+       y = "Pertenencia",
+       fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_fill_viridis(discrete = TRUE, option = "D")
+
+boxplot_soci_jane <- elsoc_mean_zonas %>% 
+  ggplot(aes(y = soci, x = jane_indx_f, fill = gse_zona)) +
+  geom_boxplot() +
+  labs(x = "", 
+       y = "Sociabilidad",
+       fill = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_fill_viridis(discrete = TRUE, option = "D")
+
+boxplot_dse_cob <- ggarrange(boxplot_spbi_segr, boxplot_soci_segr, boxplot_spbi_jane, boxplot_soci_jane,  ncol = 2, nrow = 2, common.legend = TRUE, legend="top")
+
+ggsave(boxplot_dse_cob,filename = "../3_output/graficos/2_boxplot_dse_cob.svg", width = 10, height = 8, dpi = 300)
+```
+
+```{r desc-cob-gse}
+options(digits = 3)
+
+tabla_prop <- elsoc_mean_zonas %>% 
+  dplyr::select(spbi, soci, 
+                repbi, sacci, segui, 
+                theil_segr, jane_indx, 
+                edadi, educi, essui, time, ismt_rank, gse_zona) %>% 
+  group_by(gse_zona) %>%
+  summarise_all(funs(mean), na.rm = T) 
+
+row.names(tabla_prop) <- c('Alto', 'Medio', 'Bajo')
+
+tabla_prop <- tabla_prop  %>% t() 
+  
+tabla_prop <- tabla_prop[-1,]
+
+row.names(tabla_prop) <- c('Pertenencia barrial', 'Sociabilidad barrial', 
+                           'Reputación percibida', 'Satisfacción residencial', 'Sentimiento de seguridad', 
+                           'Segregación residencial', 'Vitalidad urbana', 
+                           'Edad residente', 'Nivel educacional', 'Estatus subjetivo', 'Tiempo residencia', 'Puntaje ISMT')
+
+tabla_prop <- as.data.frame(tabla_prop) %>% 
+  rownames_to_column("Variables")
+
+writexl::write_xlsx(tabla_prop, "../3_output/tablas/tabla_prop.xlsx",
+  col_names = TRUE,
+  format_headers = TRUE
+)
+```
+
+
+# Análisis bivariado
+
+```{r corr-plot, echo=FALSE, message=FALSE, warning=FALSE}
+
+elsoc_cor <- elsoc_mean_zonas %>% 
+  dplyr::select(spbi, soci, 
+                repbi, sacci, segui, ismt_rank) %>% 
+  drop_na() %>% 
+  rename("Pertenencia"="spbi", "Sociabilidad"="soci", "Reputación"="repbi","Seguridad"="segui", "Satisfacción"="sacci",
+         "NSE barrio"="ismt_rank")
+
+
+
+color_lm <- function(data, mapping, ...){
+  p <- ggplot(data = elsoc_cor, mapping = mapping) + 
+    geom_point() + 
+    geom_smooth(method=lm, fill="red", color="red", ...)
+  p
+}
+
+color_cor <- function(data, mapping, method="p", use="pairwise", ...){
+
+              # grab data
+              x <- eval_data_col(data, mapping$x)
+              y <- eval_data_col(data, mapping$y)
+
+              # calculate correlation
+              corr <- cor(x, y, method=method, use=use)
+
+              # calculate colour based on correlation value
+              # Here I have set a correlation of minus one to blue, 
+              # zero to white, and one to red 
+              # Change this to suit: possibly extend to add as an argument of `my_fn`
+              colFn <- colorRampPalette(c("red", "white", "blue"), interpolate ='spline')
+              fill <- colFn(100)[findInterval(corr, seq(-1, 1, length=100))]
+
+              ggally_cor(data = data, mapping = mapping, ...) + 
+                theme_void() +
+                theme(panel.background = element_rect(fill=fill))
+            }
+
+cor_plot  <- ggpairs(elsoc_cor,
+             upper = list(continuous = color_cor),
+             lower = list(continuous = color_lm))
+
+ggsave(cor_plot,filename = "../3_output/graficos/cor_plot_nse.png", width = 8, height = 8, dpi = 300)
+
+```
+
+
+## H1: nse->cohesión
+
+```{r, message=FALSE, warning=FALSE}
+scat_spbi_nse <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = spbi, color = theil_mixt_f)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  #geom_smooth(se = F, size = 1.5) +
+  geom_smooth(aes(x = ismt_rank, y = spbi), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Nse barrio", 
+       y = "Pertenencia",
+       color = "Mixtura") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+
+scat_soci_nse <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = soci, color = theil_mixt_f)) +
+  geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 0.8) +
+  #geom_smooth(se = F, size = 1.5) +
+  geom_smooth(aes(x = ismt_rank, y = soci), 
+              method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Nse barrio", 
+       y = "Sociabilidad",
+       color = "Mixtura") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+
+scatter_nse_cob <- ggarrange(scat_spbi_nse, scat_soci_nse, ncol = 2, common.legend = TRUE, legend="top")
+#ggsave(scatter_nse_cob,filename = "../3_output/graficos/scat-nse-cob.png", width = 10, height = 4)
+scatter_nse_cob
+```
+
+## H2: ms->cohesion
+
+```{r}
+#reputación
+scat_spbi_repbi <- elsoc_mean_zonas %>% 
+  drop_na() %>% 
+  ggplot(aes(x = repbi, y = spbi, color = gse_zona)) +
+  #geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 1.5) +
+  geom_smooth(aes(x = repbi, y = spbi), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Reputación", 
+       y = "Pertenencia",
+       color = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
+
+scat_soci_repbi <- elsoc_mean_zonas %>% 
+  drop_na() %>% 
+  ggplot(aes(x = repbi, y = soci, color = gse_zona)) +
+  #geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 1.5) +
+  geom_smooth(aes(x = repbi, y = soci), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Reputación", 
+       y = "Sociabilidad",
+       color = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
+
+#satisfacción
+scat_spbi_sacci <- elsoc_mean_zonas %>% 
+  drop_na() %>% 
+  ggplot(aes(x = sacci, y = spbi, color = gse_zona)) +
+  #geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 1.5) +
+  geom_smooth(aes(x = sacci, y = spbi), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Satisfacción", 
+       y = "Pertenencia",
+       color = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D") 
+
+scat_soci_sacci <- elsoc_mean_zonas %>% 
+  drop_na() %>% 
+  ggplot(aes(x = sacci, y = soci, color = gse_zona)) +
+  #geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 1.5) +
+  geom_smooth(aes(x = sacci, y = soci), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Satisfacción", 
+       y = "Sociabilidad",
+       color = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D") 
+
+## seguridad
+scat_spbi_segui <- elsoc_mean_zonas %>% 
+  drop_na() %>% 
+  ggplot(aes(x = segui, y = spbi, color = gse_zona)) +
+  #geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 1.5) +
+  geom_smooth(aes(x = segui, y = spbi), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Seguridad", 
+       y = "Pertenencia",
+       color = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
+
+##segregación~seguridad~soci
+scat_soci_segui <- elsoc_mean_zonas %>% 
+  drop_na() %>% 
+  ggplot(aes(x = segui, y = soci, color = gse_zona)) +
+  #geom_point(size = 0.8) +
+  geom_smooth(method = "lm", se = F, size = 1.5) +
+  geom_smooth(aes(x = segui, y = soci), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Seguridad", 
+       y = "Sociabilidad",
+       color = "NSE Barrio") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D")
+
+scatter_ms_cob <- ggarrange(scat_spbi_repbi, scat_soci_repbi, scat_spbi_segui, scat_soci_segui, scat_spbi_sacci, scat_soci_sacci, ncol = 2, nrow = 3, common.legend = TRUE, legend="top")
+
+ggsave(scatter_ms_cob,filename = "../3_output/graficos/scat-exp-cob.svg", width = 10, height = 8, dpi = 300)
+
+```
+
+
+# Análisis espacial
+
+```{r mapa-gral, warning=FALSE}
+elsoc_ams_all_geo %>%  
+  group_by(cod_zona) %>% 
+  summarise(n_encuestas = n(),
+            prom_spbi = mean(spbi, na.rm = TRUE)) %>%  
+  ungroup()
+
+map_spbi <- mapview(elsoc_ams_all_geo, zcol = "apbr", layer.name = "Nivel de pertenencia", col.regions = mapviewPalette("mapviewRasterColors"), map.types = "CartoDB.VoyagerNoLabels")
+
+mapshot(map_spbi, file = "../3_output/graficos/map_spbi.png", width = 10, height = 15)
+
+mapview(elsoc_ams_all_geo, zcol = "theil_segr", ap.types = "CartoDB.VoyagerNoLabels")
+
+```
+
+```{r plot-map-theil}
+plot_theil <- ggplot(data = elsoc_ams_all) + 
+  geom_sf(aes(fill = theil_segr, geometry = geometry)) +
+  coord_sf(datum = st_crs(31979)) + 
+  scale_fill_viridis_c(direction = -1) +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = "Segregación\n(índice de Theil)")
+plot_theil
+ggsave(filename = "../3_output/graficos/map-theil.jpg", width = 15, height = 15, units = "cm")
+```
+
+```{r plot-map-jane}
+plot_jane <- ggplot(data = elsoc_ams_all) + 
+  geom_sf(aes(fill = ave_jane, geometry = geometry)) +
+  coord_sf(datum = st_crs(31979)) + 
+  scale_fill_viridis_c(direction = -1) +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = "Vitalidad\n(indice de Jane)")
+plot_jane
+ggsave(filename = "../3_output/graficos/map-jane.jpg", width = 15, height = 15, units = "cm")
+```
+
+```{r plot-map-spbi}
+plot_spbi <- ggplot(data = elsoc_ams_all) + 
+  geom_sf(aes(fill = spbi, geometry = geometry)) +
+  coord_sf(datum = st_crs(31979)) +
+  scale_fill_viridis_c(direction = -1, option = "plasma") +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = "Indice de\npertenencia barrial")
+plot_spbi
+ggsave(filename = "../3_output/graficos/map-spbi.jpg", width = 15, height = 15, units = "cm")
+```
+
+```{r plot-map-soci}
+plot_soci <- ggplot(data = elsoc_ams_all) + 
+  geom_sf(aes(fill = soci, geometry = geometry)) +
+  coord_sf(datum = st_crs(31979)) +
+  scale_fill_viridis_c(direction = -1, option = "plasma") +
+  theme_void() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(fill = "Indice de\nsociabilidad barrial")
+plot_soci
+ggsave(filename = "../3_output/graficos/map-soci.jpg", width = 15, height = 15, units = "cm")
+```
+

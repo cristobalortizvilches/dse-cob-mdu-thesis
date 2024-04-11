@@ -191,7 +191,7 @@ elsoc_gs$d01_01_w06[elsoc_gs$d01_01_w06 == 0] <- 1 #estatus subjetivo de 1 a 10 
 elsoc_gs_short <- elsoc_gs %>% 
   dplyr::select(idencuesta, dist, zona, cod_zona, comuna=comuna_w06,cod_comuna=comuna_cod_w06, manzana, #ids
          apbi, apbr, soci, socr, cnfi, comi, segu, segui, sacci, repb, repbi, desgr, desga, #cohesión y mecanismos
-         starts_with("t06_"),
+         starts_with("t02_"), starts_with("t03_"), starts_with("t06_"),
          sexo, edad, edadi, educ, educi, essu, essui, regi, time, #controles
          starts_with("theil_"), sd_segr, starts_with("jane_"), ismt_rank, gse_zona)   #desigualdad
 

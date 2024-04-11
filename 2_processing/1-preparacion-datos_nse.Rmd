@@ -1,0 +1,198 @@
+---
+title: "Código de preparación de datos"
+author: "Cristóbal Ortiz"
+output: html_document
+---
+
+```{r set-markdown,include=FALSE}
+knitr::opts_chunk$set(warning = FALSE,message = FALSE, cache = TRUE)
+knitr::opts_knit$set(root.dir = "../")
+options(scipen=999)
+options(knitr.kable.NA = '')
+```
+
+```{r load-library, message=FALSE, warning=FALSE}
+library(tidyverse) #herramientas para manipulación y visualización de datos (incluye ggplot2)
+library(openxlsx) #importar/exportar tablas de excel
+library(sjmisc) #manejo e inspección de variables
+library(sjlabelled) #manejo de etiquetas de variables
+library(scales) #reescalamiento y estandarización de variables
+library(sf) #manejo de base de datos espaciales
+library(ismtchile) #indice socio-material territorial de Chile
+library(chilemapas) #coberturas y geometrías de mapas en Chile
+```
+
+```{r import-dataset}
+#getwd()
+remove(list = ls())
+
+#load datasets
+load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #elsoc wide 2016-2022
+manzanas_elsoc <- haven::read_dta("../1_input/data/original/manzanas-confidencial/manzanas_ELSOC2019_20200707.dta") #manzanas elsoc  
+ismt_data <- read.csv("../1_input/data/original/ocuc-ismt/ismt_rm_2017.csv") #ismt calculado por OCUC
+elsoc_terr <- readxl::read_excel("../1_input/data/original/dterr-w01-w04/BASE_2019_COD.xlsx") # datos censales unidos a elsoc
+```
+
+```{r merge-datasets}
+#selección previa de variables
+elsoc_2022 <- elsoc_wide_2016_2022.2
+
+id_territorio <- manzanas_elsoc %>%
+  rename("cod_manzana" = "manzana") %>% 
+  mutate(cod_zona = str_sub(cod_manzana, start = 1, -4)) %>% #creo el id de las zonas censales a partir del id de manzanas
+  dplyr::select(idencuesta, cod_zona, cod_manzana)
+
+ismt_rm <- ismt_data %>% 
+  dplyr::select(cod_zona = zona, ismt_rank = ismtpn) #selección y renombre de variables
+
+elsoc_terr1 <- elsoc_terr %>% 
+  dplyr::select(idencuesta, sd_esco = jh_esc_sd, viv_social, dens_pob= densidad_pob_km2, cant_mig = inmigrante)
+
+#join de base de datos
+elsoc_a <- dplyr::left_join(x = elsoc_2022, y = elsoc_terr1, by = "idencuesta")
+
+id_territorio$idencuesta <- as.numeric(id_territorio$idencuesta) #cambio clase para hacer el siguiente join
+elsoc_b <- dplyr::left_join(x = elsoc_a, y = id_territorio, by = "idencuesta")
+
+elsoc_b$cod_zona <- as.numeric(elsoc_b$cod_zona) #cambio clase para hacer el siguiente join
+elsoc_c <- dplyr::left_join(x = elsoc_b, y = ismt_rm, by = "cod_zona")
+```
+
+```{r clean-dataset}
+#selección de variables
+elsoc_gs <- elsoc_c %>% 
+  filter(estrato_w06 == 1) %>% #solo Gran Santiago en la medición 2022
+  dplyr::select(idencuesta, #id individual
+                estrato_disenno, estrato_w06, name_comuna = comuna_w06, cod_comuna = comuna_cod_w06, comuna_cod_w01, #id geográficos provenientes de ELSOC
+                cod_zona, cod_manzana, #id geográficos provenientes de manzanas 2016
+                starts_with("t02_"), starts_with("t03_"), t01_w06, t05_w06, c12_01_w06, c07_01_w05, # cohesión barrial
+                starts_with("t06_"), t08_w06, t10_w06, t04_06_w04, # mecanismos subjetivos 
+                ismt_rank, sd_esco , viv_social, dens_pob, cant_mig, #desigualdad socioespacial
+                m0_sexo_w06, m0_edad_w06, m01_w06, d01_01_w06, m34_03_w03) #controles
+
+elsoc_gs <- elsoc_gs %>%  #dejar sólo casos que no se han ido de comunas del gran santiago en la medición 2022
+  filter(cod_comuna < 13605 & # excluye comunas rurales del RM
+         cod_comuna > 11000 & # excluye comunas fuera de la RM
+         !cod_comuna %in% c(13602, 13603)) # elimina El Monte e Isla de Maipo
+
+#convertimos no sabe/no responde/no disponible/sin dato/no aplica a NA
+elsoc_gs[elsoc_gs == -888 | elsoc_gs == -999 | elsoc_gs == 994 | elsoc_gs == 995 | elsoc_gs == 996 | elsoc_gs == -666 | elsoc_gs == -777] <- NA # varias categoría a NA
+
+#IMPORTANTE LEER: luego de esta limpieza de datos, se concluye que los códigos de zonas y comunas de ELSOC, difieren en aprox 35 casos respecto a las zonas y comunas de la data que contiene las manzanas reales. Ante la imposibilidad de verificar cuál código es el adecuado, optamos por guiarnos por los códigos de ELSOC (y especificamente la ola 2022). Es decir, la base de datos final contiene aquellos que cumples dos condiciones: en la medición original (2026) vivían en el Gran Santiago; ii) en la última medición (2022) siguen viviendo en el Gran Santiago.
+```
+
+```{r manipulate-variables}
+elsoc_gs <- elsoc_gs %>% 
+  #remove_all_labels() %>%
+  #-----Recode Y: cohesión barrial
+  mutate(spbi = rowMeans(dplyr::select(., starts_with("t02_")), na.rm = TRUE), #promedio apego al barrio
+         soci = rowMeans(dplyr::select(., starts_with("t03_")), na.rm = TRUE), #promedio sociabilidad barrial
+         cnfi = t01_w06) %>% 
+  mutate(spbf = factor(cut(spbi, breaks = c(1, 3, 4, 5), 
+                           labels = c("Baja", "Media", "Alta"), levels = 1:3)),
+         socf = factor(cut(soci, breaks = c(1, 3, 4, 5), 
+                           labels = c("Baja", "Media", "Alta"), levels = 1:3)),
+  #-----Recode M: mecanismos subjetivos 
+         segu = factor(car::recode(t10_w06, "1:2=1;3=2;4:5=3"),
+                       labels = c("Baja",  "Media", "Alta"), levels = 1:3),
+         segui = t10_w06,
+         sacci = (t06_02_w06 + t06_05_w06 + t06_06_w06 + t06_07_w06)/4,
+         repb = factor(car::recode(t08_w06, "1:2=1;3=2;4:5=3"),
+                       labels = c("Negativa", "Neutra", "Positiva"), levels = 1:3),
+         repbi = t08_w06,
+         desgr = t04_06_w04, 
+         desea = ((t04_06_w04 - max(t04_06_w04, na.rm = T)) * -1) + min(t04_06_w04, na.rm = T)) %>% 
+  #-----Recode C: controles sociodemográficos
+  mutate(edad = factor(car::recode(m0_edad_w06, "18:29=1; 30:49=2; 50:64=3; 65:150=4"),
+                       labels = c('18-29', '30-49', '50-64', '65 o más'), levels = 1:4),
+         edadi=m0_edad_w06,
+         educ = factor(car::recode(m01_w06,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
+                       labels = c("Básica", "Media", "Técnica", "Universitaria"), levels = 1:4),
+         educi=m01_w06,
+         essu = factor(car::recode(d01_01_w06, "c(6,7,8,9,10)=1; c(4,5)=2; c(0,1,2,3)=3"),
+                      labels = c("Alto", "Medio", "Bajo"), levels = 1:3),
+         essui=d01_01_w06,
+         time = m34_03_w03) %>% 
+  #-----Etiqueta variables
+  var_labels(spbi = "Pertenencia barrial",
+             spbf = "Pertenencia barrial",
+             soci = "Sociabilidad barrial",
+             socf = "Sociabilidad barrial",
+             cnfi = "Confianza en vecinos",
+             segu = 'Sentimiento seguridad',
+             segui = 'Sentimiento seguridad',
+             sacci = 'Satisfacción residencial',
+             repb = 'Reputación percibida',
+             repbi = 'Reputación percibida',
+             desgr = 'Residentes desagradables',
+             edad = 'Tramo etario',
+             educ = 'Nivel educacional',
+             essu = 'Estatus social subjetivo',
+             essui = 'Estatus social subjetivo',
+             edadi = 'Edad residente',
+             educi = "Nivel educacional",
+             time = 'Tiempo de residencia',
+             ismt_rank = "NSE barrio",
+             sd_esco = "SD Escolaridad barrio", 
+             viv_social = "Cantidad vivienda social barrios", 
+             dens_pob = "Densidad población barrio", 
+             cant_mig = "Cantidad de migrantes barrio")
+
+elsoc_gs <- elsoc_gs %>% 
+  #-----Estandarización de variables
+  mutate_at(vars(spbi, soci, segui, repbi, desgr, essui, edadi, educi, time, ismt_rank, sd_esco , viv_social, dens_pob, cant_mig), scale)
+```
+
+```{r join-espacial}
+
+#cargamos la geometría de las zonas del Gran Santiago
+zonas_ams <- mapa_zonas %>% 
+  filter(codigo_region == 13) %>% 
+  rename("cod_zona" = "geocodigo")
+
+zonas_ams$cod_zona <- as.numeric(zonas_ams$cod_zona)
+
+elsoc_ams <- dplyr::left_join(x = elsoc_gs, y = zonas_ams, by = "cod_zona") 
+
+elsoc_ams_all <- dplyr::left_join(x = zonas_ams, y = elsoc_gs, by = "cod_zona") %>% #todas las zonas del ams
+  filter(codigo_provincia %in% c(131, 132, 134, 136), #provincias GS excepto chacabuco
+         !codigo_comuna %in% c(13202, 13203, 13302, 13303, 13402, 13403, 13404, 13601, 13602, 13603, 13605), #quitar comunas fuera del ams
+         !cod_zona %in% c(13401121001, 13124071001, 13124071002, 13124071004, 13124071005, 13124081001, 13124071003, 13119131001)) #quitar zonas fuera de la mancha urbana
+
+# 13124071001 es "Ciudad de los Valles" (única zona fuera de la mancha urbana con medición ELSOC)
+
+elsoc_ams_all <- elsoc_ams_all %>% 
+  dplyr::select(idencuesta,codigo_region, codigo_provincia, name_comuna, codigo_comuna, cod_zona, geometry, everything())
+
+# mapa de prueba
+#ggplot(data = elsoc_ams_all) + geom_sf(aes(fill = ismt_rank, geometry = geometry)) + coord_sf(datum = st_crs(31979)) + scale_fill_viridis_c(direction = -1)
+```
+
+
+*Cambiar a proyectada*
+```{r create-shapes}
+elsoc_ams_geo <- st_as_sf(x = elsoc_ams, sf_column_name = "geometry") %>% 
+  st_transform(31979)
+elsoc_ams_all_geo <- st_as_sf(x = elsoc_ams_all, sf_column_name = "geometry") %>% 
+  st_transform(31979)
+```
+
+
+```{r save-dataset, warning=FALSE}
+# df para msem 
+save(elsoc_ams, file = "../1_input/data/procesada/elsoc_ams.RData") #zonas elsoc
+save(elsoc_ams_all, file = "../1_input/data/procesada/elsoc_ams_all.RData") #zonas ams
+
+# df con coordenadas geográficas
+save(elsoc_ams_geo, file = "../1_input/data/procesada/elsoc_ams_geo.RData") #zonas elsoc
+save(elsoc_ams_all_geo, file = "../1_input/data/procesada/elsoc_ams_all_geo.RData") #zonas ams
+
+# df formato shapefile 
+st_write(elsoc_ams_geo, dsn = "../1_input/data/procesada/shapes/elsoc_ams_geo.shp", delete_layer = TRUE) #zonas elsoc
+st_write(elsoc_ams_all_geo, dsn = "../1_input/data/procesada/shapes/elsoc_ams_all_geo.shp", delete_layer = TRUE) #zonas ams
+```
+
+```{r information}
+sessionInfo()
+```
+

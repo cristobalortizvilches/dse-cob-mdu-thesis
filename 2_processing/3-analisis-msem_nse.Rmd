@@ -13,22 +13,20 @@ options(knitr.kable.NA = '')
 
 ```{r load-library, include=FALSE}
 library(tidyverse) #varios
-library(lme4) #multilevel model
+library(sjmisc) #datos
+library(knitr)
 library(texreg) #tablas
-library(vtable) #tablas
 library(psych)
 
 library(lavaan)
 library(lavaanPlot)
 library(semPlot)
 library(foreign) 
-library(sjmisc) #datos
-library(knitr)
+
 library(semTable)
 library(semptools)
 #devtools::install_github("dr-JT/semoutput") #de aquí sale sem_paths
 library(semoutput)
-library(stargazer)
 ```
 
 ```{r load-dataset-proc, include=FALSE}
@@ -40,48 +38,32 @@ load("../1_input/data/procesada/elsoc_ams.RData")
 
 elsoc_sub <- elsoc_ams %>% 
   dplyr::select(idencuesta, cod_zona, 
-                apbi, soci, comi,
+                spbi, soci, 
                 segui, repbi, sacci, desgr,
-                edadi, educi, essui, time,  
-                starts_with("theil_"), sd_segr,
-                starts_with("jane_"),
-                ismt_rank, gse_zona) %>% 
+                edadi, educi, essui, time,
+                ismt_rank, sd_esco , viv_social, dens_pob) %>% 
   drop_na()
 
-elsoc_apbi <- elsoc_ams %>% 
+elsoc_spbi <- elsoc_ams %>% 
   dplyr::select(idencuesta, cod_zona, 
-                apbi,
+                spbi,
                 segui, repbi, sacci, desgr,
-                edadi, educi, essui, time,  
-                starts_with("theil_"), sd_segr,
-                starts_with("jane_"),
-                ismt_rank, gse_zona) %>% 
+                edadi, educi, essui, time,
+                ismt_rank, sd_esco , viv_social, dens_pob) %>% 
   drop_na()
 
 elsoc_soci <- elsoc_ams %>% 
   dplyr::select(idencuesta, cod_zona, 
                 soci,
                 segui, repbi, sacci, desgr,
-                edadi, educi, essui, time,  
-                starts_with("theil_"), sd_segr,
-                starts_with("jane_"),
-                ismt_rank, gse_zona) %>% 
-  drop_na()
-
-elsoc_comi <- elsoc_ams %>% 
-  dplyr::select(idencuesta, cod_zona, 
-                comi,
-                segui, repbi, sacci, desgr,
-                edadi, educi, essui, time,  
-                starts_with("theil_"), sd_segr,
-                starts_with("jane_"),
-                ismt_rank, gse_zona) %>% 
+                edadi, educi, essui, time, 
+                ismt_rank, sd_esco , viv_social, dens_pob) %>% 
   drop_na()
 ```
 
 ```{r correlations}
 elsoc_sub %>% 
-  dplyr::select(segui, repbi, sacci, desgr, edadi, educi, essui, time) %>% 
+  dplyr::select(spbi, soci, segui, repbi, sacci, desgr, edadi, educi, essui, time) %>% 
   psych::pairs.panels(smooth = TRUE,      # If TRUE, draws loess smooths
              scale = FALSE,      # If TRUE, scales the correlation text font
              density = TRUE,     # If TRUE, adds density plots and histograms
@@ -97,7 +79,7 @@ elsoc_sub %>%
              ci = TRUE)          # If TRUE, adds confidence intervals
 
 elsoc_sub %>% 
-  dplyr::select(apbi, soci, ismt_rank, theil_mixt, jane_indx) %>% 
+  dplyr::select(spbi, soci, ismt_rank, sd_esco, viv_social, dens_pob) %>% 
   psych::pairs.panels(smooth = TRUE,      # If TRUE, draws loess smooths
              scale = FALSE,      # If TRUE, scales the correlation text font
              density = TRUE,     # If TRUE, adds density plots and histograms
@@ -117,25 +99,16 @@ elsoc_sub %>%
 
 ## Mediación Multinivel: upper-level mediation (2-1-1)
 
-```{r msem-model-apbi-soci, warning=FALSE}
-msem_apbi <- '
+```{r msem-model-spbi-soci, warning=FALSE}
+msem_spbi <- '
 level: 1
       # Modelo estructural nivel 1
-      apbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
+      spbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
 
-      # Covarianzas
-      repbi ~~ segui
-      segui ~~ sacci
-      sacci ~~ repbi
-      desgr ~~ repbi
-      desgr ~~ sacci
-      desgr ~~ segui
-      educi ~~ essui
-      edadi ~~ time
       
 level: 2
       # Modelo estructural nivel 2
-      apbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank
+      spbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank + c2*sd_esco + c3*viv_social + c4*dens_pob
       repbi ~ a1*ismt_rank
       sacci ~ a2*ismt_rank
       segui ~ a3*ismt_rank
@@ -148,22 +121,27 @@ level: 2
       desgr ~~ repbi
       desgr ~~ sacci
       desgr ~~ segui
+      ismt_rank ~~ sd_esco
+      ismt_rank ~~ viv_social
+      dens_pob ~~ sd_esco
+      dens_pob ~~ viv_social
+      
 
       # Efecto indirecto 
-      ind_ismt_repbi_apbi := a1*b1
-      ind_ismt_sacci_apbi := a2*b2
-      ind_ismt_segui_apbi := a3*b3
-      ind_ismt_desgr_apbi := a4*b4
+      ind_ismt_repbi_spbi := a1*b1
+      ind_ismt_sacci_spbi := a2*b2
+      ind_ismt_segui_spbi := a3*b3
+      ind_ismt_desgr_spbi := a4*b4
 
       # Efecto total 
-      tot_ismt_repbi_apbi := c1 + (a1*b1)
-      tot_ismt_sacci_apbi := c1 + (a2*b2)
-      tot_ismt_segui_apbi := c1 + (a3*b3)
-      tot_ismt_desgr_apbi := c1 + (a4*b4)
+      tot_ismt_repbi_spbi := c1 + (a1*b1)
+      tot_ismt_sacci_spbi := c1 + (a2*b2)
+      tot_ismt_segui_spbi := c1 + (a3*b3)
+      tot_ismt_desgr_spbi := c1 + (a4*b4)
 '
 
-fit_msem_apbi <- sem(msem_apbi, data = elsoc_apbi, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
-#summary(fit_msem_apbi, fit.measures = T)
+fit_msem_spbi <- sem(msem_spbi, data = elsoc_spbi, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
+#summary(fit_msem_spbi, fit.measures = TRUE, standardized = TRUE)
 
 msem_soci <- '
 level: 1
@@ -182,7 +160,7 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      soci ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank
+      soci ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank + c2*sd_esco + c3*viv_social + c4*dens_pob
       repbi ~ a1*ismt_rank
       sacci ~ a2*ismt_rank
       segui ~ a3*ismt_rank
@@ -195,6 +173,10 @@ level: 2
       desgr ~~ repbi
       desgr ~~ sacci
       desgr ~~ segui
+      ismt_rank ~~ sd_esco
+      ismt_rank ~~ viv_social
+      dens_pob ~~ sd_esco
+      dens_pob ~~ viv_social
       
       # Efecto indirecto 
       ind_ismt_repbi_soci := a1*b1
@@ -210,13 +192,13 @@ level: 2
 '
 
 fit_msem_soci <- sem(msem_soci, data = elsoc_soci, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
-#summary(fit_msem_soci, fit.measures = T)
+#summary(fit_msem_soci, fit.measures = TRUE, standardized = TRUE)
 ```
 
 ```{r coef-plot-2v, warning=FALSE}
-# apbi
-coef_apbi <-
-  broom::tidy(fit_msem_apbi, conf.int = TRUE, conf.level = 0.95) %>%
+# spbi
+coef_spbi <-
+  broom::tidy(fit_msem_spbi, conf.int = TRUE, conf.level = 0.95) %>%
   filter(!level == 1) %>% 
   filter(op %in% c("~", ":="), !str_detect(term, "^tot_"), !str_detect(label, "^a")) %>% 
   data_frame(var = c(rep("Pertenencia"))) %>% 
@@ -230,25 +212,32 @@ coef_soci <-
   data_frame(var = c(rep("Sociabilidad"))) %>% 
   dplyr::select(var, term, estimate, conf.low, conf.high)
 
-coef_msem <- rbind(coef_apbi, coef_soci)
+coef_msem <- rbind(coef_spbi, coef_soci)
 
 coef_msem <- coef_msem %>% 
   mutate(term = recode(term, 
-                       "apbi ~ repbi" = "Reputación",
+                       "spbi ~ repbi" = "Reputación",
                        "soci ~ repbi" = "Reputación",
-                       "apbi ~ segui" = "Seguridad",
+                       "spbi ~ segui" = "Seguridad",
                        "soci ~ segui" = "Seguridad",
-                       "apbi ~ sacci" = "Satisfacción",
+                       "spbi ~ sacci" = "Satisfacción",
                        "soci ~ sacci" = "Satisfacción",
-                       "apbi ~ desgr" = "Conflicto",
+                       "spbi ~ desgr" = "Conflicto",
                        "soci ~ desgr" = "Conflicto",
-                       "apbi ~ ismt_rank" = "Nse barrio",
-                       "soci ~ ismt_rank" = "Nse barrio",
                        
-                       "ind_ismt_repbi_apbi := a1*b1" = "Nse barrio~\nReputación",
-                       "ind_ismt_sacci_apbi := a2*b2" = "Nse barrio~\nSatisfacción",
-                       "ind_ismt_segui_apbi := a3*b3" = "Nse barrio~\nSeguridad",
-                       "ind_ismt_desgr_apbi := a4*b4" = "Nse barrio~\nConflicto",
+                       "spbi ~ ismt_rank" = "Nse barrio",
+                       "soci ~ ismt_rank" = "Nse barrio",
+                       "spbi ~ sd_esco" = "Mixtura",
+                       "soci ~ sd_esco" = "Mixtura",
+                       "spbi ~ viv_social" = "Vivienda social",
+                       "soci ~ viv_social" = "Vivienda social",
+                       "spbi ~ dens_pob" = "Densidad",
+                       "soci ~ dens_pob" = "Densidad",
+                       
+                       "ind_ismt_repbi_spbi := a1*b1" = "Nse barrio~\nReputación",
+                       "ind_ismt_sacci_spbi := a2*b2" = "Nse barrio~\nSatisfacción",
+                       "ind_ismt_segui_spbi := a3*b3" = "Nse barrio~\nSeguridad",
+                       "ind_ismt_desgr_spbi := a4*b4" = "Nse barrio~\nConflicto",
 
                        "ind_ismt_repbi_soci := a1*b1" = "Nse barrio~\nReputación",
                        "ind_ismt_sacci_soci := a2*b2" = "Nse barrio~\nSatisfacción",
@@ -256,7 +245,7 @@ coef_msem <- coef_msem %>%
                        "ind_ismt_desgr_soci := a4*b4" = "Nse barrio~\nConflicto"))
 
 coef_plot <- coef_msem %>% 
-  ggplot(aes(x = factor(term, levels = c('Nse barrio', 
+  ggplot(aes(x = factor(term, levels = c('Nse barrio', "Mixtura", "Densidad", "Vivienda social", 
                                          'Reputación', 'Satisfacción', 'Seguridad', 'Conflicto',
                                          'Nse barrio~\nReputación', 'Nse barrio~\nSatisfacción',
                                          'Nse barrio~\nSeguridad', 'Nse barrio~\nConflicto')), 
@@ -276,18 +265,18 @@ coef_plot <- coef_msem %>%
        y = "Coeficientes estandarizados") +
   scale_x_discrete(limits = rev)
 
-coef_plot 
+coef_plot
 
-ggsave(coef_plot,filename = "../3_output/graficos/coef_plot_ismt_cob.png", width = 8, height = 6, dpi = 300)
+ggsave(coef_plot,filename = "../3_output/graficos/coef-nse-cob.png", width = 8, height = 8, dpi = 300)
 ```
 
-```{r msem-table-apbi-soci}
+```{r msem-table-spbi-soci}
 options(digits = 3)
 
-#apbi
-sem_table_apbi <- sem_paths(fit_msem_apbi, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
-#sem_table_apbi %>% cat(., file = "../3_output/tablas/sem_table_apbi.doc")
-sem_table_apbi
+#spbi
+sem_table_spbi <- sem_paths(fit_msem_spbi, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
+#sem_table_spbi %>% cat(., file = "../3_output/tablas/sem_table_spbi.doc")
+sem_table_spbi
 
 #soci
 sem_table_soci <- sem_paths(fit_msem_soci, standardized = TRUE, ci = "standardized", ci_level = 0.95, print = TRUE)
@@ -295,16 +284,16 @@ sem_table_soci <- sem_paths(fit_msem_soci, standardized = TRUE, ci = "standardiz
 sem_table_soci 
 ```
 
-```{r fit-measure-apbi-soci}
-#apbi
-ajust_apbi <- fitMeasures(fit_msem_apbi, c("chisq", "cfi","rmsea","srmr")) %>% 
+```{r fit-measure-spbi-soci}
+#spbi
+ajust_spbi <- fitMeasures(fit_msem_spbi, c("chisq", "cfi","rmsea","srmr")) %>% 
   as.data.frame() %>% 
   rownames_to_column("measure")
 
-#writexl::write_xlsx(ajust_apbi, path ="../3_output/tablas/ajust_table_apbi.xlsx")
+#writexl::write_xlsx(ajust_spbi, path ="../3_output/tablas/ajust_table_spbi.xlsx")
 
-lavInspect(fit_msem_apbi, "icc")
-lavInspect(fit_msem_apbi, "r2")
+lavInspect(fit_msem_spbi, "icc")
+lavInspect(fit_msem_spbi, "r2")
 
 #soci
 ajust_soci <- fitMeasures(fit_msem_soci, c("chisq", "cfi","rmsea","srmr")) %>% 
@@ -318,7 +307,5 @@ lavInspect(fit_msem_soci, "icc")
 
 ## Save models
 ```{r save-models}
-#save(fit_msem_apbi, fit_msem_soci, file = "../3_output/modelos/sem_models.RData")
-
-#save(fit_sem_apbi_low, fit_sem_apbi_middle, fit_sem_apbi_high, fit_sem_soci_low, fit_sem_soci_middle, fit_sem_soci_high, file = "../3_output/modelos/sem_models_gse.RData")
+#save(fit_msem_spbi, fit_msem_soci, file = "../3_output/modelos/sem_models.RData")
 ```

@@ -43,7 +43,7 @@ elsoc_long <- elsoc_long_2016_2022.2
 elsoc_mean_zonas <- elsoc_ams %>% 
   group_by(cod_zona) %>% 
   dplyr::select(idencuesta, cod_zona, 
-                apbi, soci, 
+                spbi, soci, 
                 repbi, sacci, segui, 
                 edadi, educi, essui, time,  
                 theil_pola, ismt_rank, theil_mixt, theil_segr, jane_indx) %>% 
@@ -80,16 +80,16 @@ elsoc_mean_zonas <- elsoc_mean_zonas %>%
 elsoc_long_2022 <- elsoc_long %>% 
   filter(ola == 1, !is_nsnr(t02_01, t02_02, t02_03, t02_04, t03_01, t03_02, t03_03, t03_04, t06_02, t06_05, t06_06, t06_07))
 
-alfa_apbi <- psych::alpha(dplyr::select(elsoc_long_2022, t02_01, t02_02, t02_03, t02_04)) 
+alfa_spbi <- psych::alpha(dplyr::select(elsoc_long_2022, t02_01, t02_02, t02_03, t02_04)) 
 alfa_soci <- psych::alpha(dplyr::select(elsoc_long_2022, t03_01, t03_02, t03_03, t03_04))
 alfa_sacci <- psych::alpha(dplyr::select(elsoc_long_2022, t06_02, t06_05, t06_06, t06_07))
 
-alfa_cron <- c(alfa_apbi[[1]][,1], alfa_soci[[1]][,1], rep("", 2), alfa_sacci[[1]][,1], rep("", 14)) %>% 
+alfa_cron <- c(alfa_spbi[[1]][,1], alfa_soci[[1]][,1], rep("", 2), alfa_sacci[[1]][,1], rep("", 14)) %>% 
   as.numeric() %>% 
   round(digits = 2)
 
 elsoc_desc <- elsoc_ams %>% 
-  dplyr::select(apbi, soci, 
+  dplyr::select(spbi, soci, 
                 repbi, segui, sacci, 
                 edadi, educi, essui, time,
                 theil_segr, jane_indx, ismt_rank, gse_zona)
@@ -113,7 +113,7 @@ write.xlsx(desc_table, file = "../3_output/tablas/desc_table.xlsx", sheetName = 
 
 
 ```{r cob-estrato}
-bar_apbi <- elsoc_long %>% 
+bar_spbi <- elsoc_long %>% 
   filter(tipo_atricion == 1 & ola %in% c(1,6), !is_nsnr(t02_01, t02_02, t02_03, t02_04)) %>% 
   mutate(spb = (t02_01 + t02_02 + t02_03 + t02_04)/4,
          spb_rec = factor(cut(spb, breaks = c(0,2.75,3.75,5)),
@@ -169,22 +169,22 @@ bar_soci <- elsoc_long %>%
        title = 'Nivel de sociabilidad barrial según ola y tipo de ciudad',
        subtitle = 'Porcentaje con niveles altos (>3.75)') 
 
-bar_cob <- gridExtra::grid.arrange(bar_apbi, bar_soci,  ncol = 2)
+bar_cob <- gridExtra::grid.arrange(bar_spbi, bar_soci,  ncol = 2)
 #ggsave(bar_cob,filename = "../3_output/graficos/1_bar_cob.png", width = 12, height = 6 , dpi = 300)
 
 ```
 
 ```{r boxplot-cob-gse}
-boxplot_apbi <- elsoc_ams %>% 
+boxplot_spbi <- elsoc_ams %>% 
   mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
                                                      ismt_rank > 0.5144 ~ 2,
                                                      ismt_rank <= 0.5144 ~ 3)),
                            labels = c('Alto', 'Medio', 'Bajo'),
                            levels = c(1,2,3))) %>% 
-  ggplot(aes(x = gse_zona, y = apbi, fill = gse_zona)) +
+  ggplot(aes(x = gse_zona, y = spbi, fill = gse_zona)) +
   geom_boxplot() +
-  geom_hline(yintercept = mean(elsoc_ams$apbi, na.rm = T), color = 'red') +
-  geom_text(aes(0, mean(elsoc_ams$apbi, na.rm = T), label = "x̅ = 3.5", vjust = -1, hjust =-0.2), size = 3) +
+  geom_hline(yintercept = mean(elsoc_ams$spbi, na.rm = T), color = 'red') +
+  geom_text(aes(0, mean(elsoc_ams$spbi, na.rm = T), label = "x̅ = 3.5", vjust = -1, hjust =-0.2), size = 3) +
     labs(x = "", 
          y = "Pertenencia barrial",
          fill = "NSE Barrio") +
@@ -215,7 +215,7 @@ boxplot_soci <- elsoc_ams %>%
         axis.text.x = element_text(size = 12)) +
   scale_fill_viridis(discrete = TRUE, option = "D") 
 
-boxplot_cob <- ggarrange(boxplot_apbi, boxplot_soci, nrow = 1, align = "hv", common.legend = TRUE, legend = "top")
+boxplot_cob <- ggarrange(boxplot_spbi, boxplot_soci, nrow = 1, align = "hv", common.legend = TRUE, legend = "top")
 
 ggsave(boxplot_cob,filename = "../3_output/graficos/boxplot_cob.png", width = 8, height = 6, dpi = 300)
 
@@ -234,13 +234,13 @@ elsoc_comunas <- elsoc_comunas %>%
   dplyr::select(labels, ismt_rank) %>% 
   arrange(ismt_rank)
 
-boxplot_apbi_gse <- elsoc_ams %>% 
+boxplot_spbi_gse <- elsoc_ams %>% 
   mutate(gse_zona = factor(with(elsoc_ams, case_when(ismt_rank > 0.7325960 ~ 1,
                                                      ismt_rank > 0.5144 ~ 2,
                                                      ismt_rank <= 0.5144 ~ 3)),
                            labels = c('Alto', 'Medio', 'Bajo'),
                            levels = c(1,2,3))) %>% 
-  ggplot(aes(x = factor(reorder(comuna, ismt_rank),labels = elsoc_comunas$labels), y = apbi, fill = gse_zona)) +
+  ggplot(aes(x = factor(reorder(comuna, ismt_rank),labels = elsoc_comunas$labels), y = spbi, fill = gse_zona)) +
   geom_boxplot() +
   geom_hline(yintercept = 3.5, color = 'red') +
     labs(x = "Comuna (Promedio ISMT)", 
@@ -278,15 +278,15 @@ boxplot_soci_gse <- elsoc_ams %>%
   facet_wrap(.~gse_zona) +
   coord_flip()
 
-boxplot_cob_gse <- ggarrange(boxplot_apbi_gse, boxplot_soci_gse, nrow = 1, align = "hv")
+boxplot_cob_gse <- ggarrange(boxplot_spbi_gse, boxplot_soci_gse, nrow = 1, align = "hv")
 
 ggsave(boxplot_cob_gse, filename = "../3_output/graficos/boxplot_cob_gse.png", width = 10, height = 5 , dpi = 300)
 
 ```
 
 ```{r boxplot-cob-gse-dse}
-boxplot_apbi_segr <- elsoc_mean_zonas %>% 
-  ggplot(aes(y = apbi, x = theil_segr_f, fill = gse_zona)) +
+boxplot_spbi_segr <- elsoc_mean_zonas %>% 
+  ggplot(aes(y = spbi, x = theil_segr_f, fill = gse_zona)) +
   geom_boxplot() +
   labs(x = "", 
        y = "Pertenencia",
@@ -309,8 +309,8 @@ boxplot_soci_segr <- elsoc_mean_zonas %>%
         axis.title = element_text(size = 10, face = "bold")) +
   scale_fill_viridis(discrete = TRUE, option = "D")
 
-boxplot_apbi_jane <- elsoc_mean_zonas %>% 
-  ggplot(aes(y = apbi, x = jane_indx_f, fill = gse_zona)) +
+boxplot_spbi_jane <- elsoc_mean_zonas %>% 
+  ggplot(aes(y = spbi, x = jane_indx_f, fill = gse_zona)) +
   geom_boxplot() +
   labs(x = "", 
        y = "Pertenencia",
@@ -333,7 +333,7 @@ boxplot_soci_jane <- elsoc_mean_zonas %>%
         axis.title = element_text(size = 10, face = "bold")) +
   scale_fill_viridis(discrete = TRUE, option = "D")
 
-boxplot_dse_cob <- ggarrange(boxplot_apbi_segr, boxplot_soci_segr, boxplot_apbi_jane, boxplot_soci_jane,  ncol = 2, nrow = 2, common.legend = TRUE, legend="top")
+boxplot_dse_cob <- ggarrange(boxplot_spbi_segr, boxplot_soci_segr, boxplot_spbi_jane, boxplot_soci_jane,  ncol = 2, nrow = 2, common.legend = TRUE, legend="top")
 
 ggsave(boxplot_dse_cob,filename = "../3_output/graficos/2_boxplot_dse_cob.svg", width = 10, height = 8, dpi = 300)
 ```
@@ -342,7 +342,7 @@ ggsave(boxplot_dse_cob,filename = "../3_output/graficos/2_boxplot_dse_cob.svg", 
 options(digits = 3)
 
 tabla_prop <- elsoc_mean_zonas %>% 
-  dplyr::select(apbi, soci, 
+  dplyr::select(spbi, soci, 
                 repbi, sacci, segui, 
                 theil_segr, jane_indx, 
                 edadi, educi, essui, time, ismt_rank, gse_zona) %>% 
@@ -375,11 +375,11 @@ writexl::write_xlsx(tabla_prop, "../3_output/tablas/tabla_prop.xlsx",
 ```{r corr-plot, echo=FALSE, message=FALSE, warning=FALSE}
 
 elsoc_cor <- elsoc_mean_zonas %>% 
-  dplyr::select(apbi, soci, 
+  dplyr::select(spbi, soci, 
                 repbi, sacci, segui,
                 theil_segr, jane_indx, ismt_rank) %>% 
   drop_na() %>% 
-  rename("Pertenencia"="apbi", "Sociabilidad"="soci", "Reputación"="repbi","Seguridad"="segui", "Satisfacción"="sacci",
+  rename("Pertenencia"="spbi", "Sociabilidad"="soci", "Reputación"="repbi","Seguridad"="segui", "Satisfacción"="sacci",
          "Segregación"="theil_segr", "Vitalidad"="jane_indx", "NSE barrio"="ismt_rank")
 
 
@@ -424,12 +424,12 @@ ggsave(cor_plot,filename = "../3_output/graficos/cor_plot.png", width = 8, heigh
 ## H1: segregación->cohesión & segregacion->ms~cohesion
 
 ```{r scat-segr, message=FALSE, warning=FALSE}
-scat_apbi_segr <- elsoc_mean_zonas %>% 
-  ggplot(aes(x = theil_segr, y = apbi, color = gse_zona)) +
+scat_spbi_segr <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = theil_segr, y = spbi, color = gse_zona)) +
   geom_point(size = 0.8) +
   #geom_smooth(method = "lm", se = F, size = 0.8) +
   geom_smooth(se = F, size = 1.5) +
-  geom_smooth(aes(x = theil_segr, y = apbi), 
+  geom_smooth(aes(x = theil_segr, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Homogeneidad", 
        y = "Pertenencia",
@@ -456,7 +456,7 @@ scat_soci_segr <- elsoc_mean_zonas %>%
         axis.title = element_text(size = 10, face = "bold")) +
   scale_color_viridis(discrete = TRUE, option = "D")
 
-scatter_segr_cob <- ggarrange(scat_apbi_segr, scat_soci_segr, ncol = 2, common.legend = TRUE, legend="top")
+scatter_segr_cob <- ggarrange(scat_spbi_segr, scat_soci_segr, ncol = 2, common.legend = TRUE, legend="top")
 ggsave(scatter_segr_cob,filename = "../3_output/graficos/scat-homo-cob.svg", width = 10, height = 4)
 scatter_segr_cob
 ```
@@ -477,12 +477,12 @@ elsoc_mean_zonas %>%
 
 ## H2: vitalidad->cohesión & vitalidad->ms~cohesion
 ```{r scat-jane}
-scat_apbi_jane <- elsoc_mean_zonas %>% 
-  ggplot(aes(x = jane_indx, y = apbi, color = gse_zona)) +
+scat_spbi_jane <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = jane_indx, y = spbi, color = gse_zona)) +
   geom_point(size = 1) +
   #geom_smooth(method = "lm", se = F, size = 0.8) +
   geom_smooth(se = F, size = 1.5) +
-  geom_smooth(aes(x = jane_indx, y = apbi), 
+  geom_smooth(aes(x = jane_indx, y = spbi), 
               method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Vitalidad", 
        y = "Pertenencia",
@@ -509,19 +509,19 @@ scat_soci_jane <- elsoc_mean_zonas %>%
         axis.title = element_text(size = 10, face = "bold")) +
   scale_color_viridis(discrete = TRUE, option = "D")
 
-scatter_jane_cob <- ggarrange(scat_apbi_jane, scat_soci_jane,  ncol = 2, common.legend = TRUE, legend = "top")
+scatter_jane_cob <- ggarrange(scat_spbi_jane, scat_soci_jane,  ncol = 2, common.legend = TRUE, legend = "top")
 
 ggsave(scatter_jane_cob,filename = "../3_output/graficos/scat-vita-cob.svg", width = 10, height = 4)
 scatter_jane_cob
 ```
 
 ```{r}
-scat_apbi_nse <- elsoc_mean_zonas %>% 
-  ggplot(aes(x = ismt_rank, y = apbi, color = theil_mixt_f)) +
+scat_spbi_nse <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = spbi, color = theil_mixt_f)) +
   geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 0.8) +
   #geom_smooth(se = F, size = 1.5) +
-  geom_smooth(aes(x = ismt_rank, y = apbi), 
+  geom_smooth(aes(x = ismt_rank, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Nse barrio", 
        y = "Pertenencia",
@@ -548,8 +548,46 @@ scat_soci_nse <- elsoc_mean_zonas %>%
         axis.title = element_text(size = 10, face = "bold")) +
   scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
 
-scatter_nse_cob <- ggarrange(scat_apbi_nse, scat_soci_nse, ncol = 2, common.legend = TRUE, legend="top")
-ggsave(scatter_nse_cob,filename = "../3_output/graficos/scat-nse-cob.png", width = 10, height = 4)
+scatter_nse_cob <- ggarrange(scat_spbi_nse, scat_soci_nse, ncol = 2, common.legend = TRUE, legend="top")
+#ggsave(scatter_nse_cob,filename = "../3_output/graficos/scat-nse-cob.png", width = 10, height = 4)
+scatter_nse_cob
+```
+
+```{r}
+scat_spbi_nse <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = spbi)) +
+  geom_point(size = 0.8) +
+  #geom_smooth(method = "lm", se = F, size = 0.8) +
+  geom_smooth(se = F, size = 1.5) +
+  geom_smooth(aes(x = ismt_rank, y = spbi), 
+              method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Nse barrio", 
+       y = "Pertenencia",
+       color = "Mixtura") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+
+scat_soci_nse <- elsoc_mean_zonas %>% 
+  ggplot(aes(x = ismt_rank, y = soci)) +
+  geom_point(size = 0.8) +
+  #geom_smooth(method = "lm", se = F, size = 0.8) +
+  geom_smooth(se = F, size = 1.5) +
+  geom_smooth(aes(x = ismt_rank, y = soci), 
+              method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
+  labs(x = "Nse barrio", 
+       y = "Sociabilidad",
+       color = "Mixtura") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 10, face = "bold")) +
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+
+scatter_nse_cob <- ggarrange(scat_spbi_nse, scat_soci_nse, ncol = 2, common.legend = TRUE, legend="top")
+#ggsave(scatter_nse_cob,filename = "../3_output/graficos/scat-nse-cob.png", width = 10, height = 4)
 scatter_nse_cob
 ```
 
@@ -558,13 +596,13 @@ scatter_nse_cob
 ```{r scat-segr-ms}
 #segregación~reputación
 
-##segregación~reputación~apbi
-scat_apbi_segr_repbi <- elsoc_mean_zonas %>% 
+##segregación~reputación~spbi
+scat_spbi_segr_repbi <- elsoc_mean_zonas %>% 
   drop_na() %>% 
-  ggplot(aes(x = repbi, y = apbi, color = gse_zona)) +
+  ggplot(aes(x = repbi, y = spbi, color = gse_zona)) +
   geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 0.8) +
-  geom_smooth(aes(x = repbi, y = apbi), 
+  geom_smooth(aes(x = repbi, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Reputación", 
        y = "Pertenencia",
@@ -596,13 +634,13 @@ scat_soci_segr_repbi <- elsoc_mean_zonas %>%
 
 #segregación~seguridad
 
-##segregación~seguridad~apbi
-scat_apbi_segr_segui <- elsoc_mean_zonas %>% 
+##segregación~seguridad~spbi
+scat_spbi_segr_segui <- elsoc_mean_zonas %>% 
   drop_na() %>% 
-  ggplot(aes(x = segui, y = apbi, color = gse_zona)) +
+  ggplot(aes(x = segui, y = spbi, color = gse_zona)) +
   geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 0.8) +
-  geom_smooth(aes(x = segui, y = apbi), 
+  geom_smooth(aes(x = segui, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Pertenencia",
@@ -633,7 +671,7 @@ scat_soci_segr_segui <- elsoc_mean_zonas %>%
   facet_wrap(.~theil_segr_f)
 
 
-scatter_segr_ms_cob <- ggarrange(scat_apbi_segr, scat_soci_segr, scat_apbi_segr_repbi, scat_soci_segr_repbi, ncol = 2, nrow = 3, common.legend = TRUE, legend = "top")
+scatter_segr_ms_cob <- ggarrange(scat_spbi_segr, scat_soci_segr, scat_spbi_segr_repbi, scat_soci_segr_repbi, ncol = 2, nrow = 3, common.legend = TRUE, legend = "top")
 ggsave(scatter_segr_ms_cob,filename = "../3_output/graficos/scat_segr_ms_cob.svg", width = 10, height = 8)
 
 ```
@@ -642,13 +680,13 @@ ggsave(scatter_segr_ms_cob,filename = "../3_output/graficos/scat_segr_ms_cob.svg
 ```{r scat-vita-ms}
 #vitalidad~satisfacción
 
-##vitalidad~satisfacción~apbi
-scat_apbi_jane_sacci <- elsoc_mean_zonas %>% 
+##vitalidad~satisfacción~spbi
+scat_spbi_jane_sacci <- elsoc_mean_zonas %>% 
   drop_na() %>% 
-  ggplot(aes(x = sacci, y = apbi, color = gse_zona)) +
+  ggplot(aes(x = sacci, y = spbi, color = gse_zona)) +
   geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 0.8) +
-  geom_smooth(aes(x = sacci, y = apbi), 
+  geom_smooth(aes(x = sacci, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Satisfacción", 
        y = "Pertenencia",
@@ -680,13 +718,13 @@ scat_soci_jane_sacci <- elsoc_mean_zonas %>%
 
 #vitalidad~seguridad
 
-##vitalidad~seguridad~apbi
-scat_apbi_jane_segui <- elsoc_mean_zonas %>% 
+##vitalidad~seguridad~spbi
+scat_spbi_jane_segui <- elsoc_mean_zonas %>% 
   drop_na() %>% 
-  ggplot(aes(x = segui, y = apbi, color = gse_zona)) +
+  ggplot(aes(x = segui, y = spbi, color = gse_zona)) +
   geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 0.8) +
-  geom_smooth(aes(x = segui, y = apbi), 
+  geom_smooth(aes(x = segui, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Pertenencia",
@@ -716,7 +754,7 @@ scat_soci_jane_segui <- elsoc_mean_zonas %>%
   scale_color_viridis(discrete = TRUE, option = "D") +
   facet_wrap(.~jane_indx_f)
 
-scatter_jane_ms_cob <- ggarrange(scat_apbi_jane, scat_soci_jane, scat_apbi_jane_segui, scat_soci_jane_segui, ncol = 2, nrow = 3, common.legend = TRUE, legend="top")
+scatter_jane_ms_cob <- ggarrange(scat_spbi_jane, scat_soci_jane, scat_spbi_jane_segui, scat_soci_jane_segui, ncol = 2, nrow = 3, common.legend = TRUE, legend="top")
 
 ggsave(scatter_jane_ms_cob,filename = "../3_output/graficos/scat_jane_ms_cob.svg", width = 10, height = 8)
 ```
@@ -725,12 +763,12 @@ ggsave(scatter_jane_ms_cob,filename = "../3_output/graficos/scat_jane_ms_cob.svg
 
 ```{r}
 #reputación
-scat_apbi_repbi <- elsoc_mean_zonas %>% 
+scat_spbi_repbi <- elsoc_mean_zonas %>% 
   drop_na() %>% 
-  ggplot(aes(x = repbi, y = apbi, color = gse_zona)) +
+  ggplot(aes(x = repbi, y = spbi, color = gse_zona)) +
   #geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 1.5) +
-  geom_smooth(aes(x = repbi, y = apbi), 
+  geom_smooth(aes(x = repbi, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Reputación", 
        y = "Pertenencia",
@@ -758,12 +796,12 @@ scat_soci_repbi <- elsoc_mean_zonas %>%
   scale_color_viridis(discrete = TRUE, option = "D")
 
 #satisfacción
-scat_apbi_sacci <- elsoc_mean_zonas %>% 
+scat_spbi_sacci <- elsoc_mean_zonas %>% 
   drop_na() %>% 
-  ggplot(aes(x = sacci, y = apbi, color = gse_zona)) +
+  ggplot(aes(x = sacci, y = spbi, color = gse_zona)) +
   #geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 1.5) +
-  geom_smooth(aes(x = sacci, y = apbi), 
+  geom_smooth(aes(x = sacci, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Satisfacción", 
        y = "Pertenencia",
@@ -791,12 +829,12 @@ scat_soci_sacci <- elsoc_mean_zonas %>%
   scale_color_viridis(discrete = TRUE, option = "D") 
 
 ## seguridad
-scat_apbi_segui <- elsoc_mean_zonas %>% 
+scat_spbi_segui <- elsoc_mean_zonas %>% 
   drop_na() %>% 
-  ggplot(aes(x = segui, y = apbi, color = gse_zona)) +
+  ggplot(aes(x = segui, y = spbi, color = gse_zona)) +
   #geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 1.5) +
-  geom_smooth(aes(x = segui, y = apbi), 
+  geom_smooth(aes(x = segui, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
   labs(x = "Seguridad", 
        y = "Pertenencia",
@@ -824,7 +862,7 @@ scat_soci_segui <- elsoc_mean_zonas %>%
         axis.title = element_text(size = 10, face = "bold")) +
   scale_color_viridis(discrete = TRUE, option = "D")
 
-scatter_ms_cob <- ggarrange(scat_apbi_repbi, scat_soci_repbi, scat_apbi_segui, scat_soci_segui, scat_apbi_sacci, scat_soci_sacci, ncol = 2, nrow = 3, common.legend = TRUE, legend="top")
+scatter_ms_cob <- ggarrange(scat_spbi_repbi, scat_soci_repbi, scat_spbi_segui, scat_soci_segui, scat_spbi_sacci, scat_soci_sacci, ncol = 2, nrow = 3, common.legend = TRUE, legend="top")
 
 ggsave(scatter_ms_cob,filename = "../3_output/graficos/scat-exp-cob.svg", width = 10, height = 8, dpi = 300)
 
@@ -837,12 +875,12 @@ ggsave(scatter_ms_cob,filename = "../3_output/graficos/scat-exp-cob.svg", width 
 elsoc_ams_all_geo %>%  
   group_by(cod_zona) %>% 
   summarise(n_encuestas = n(),
-            prom_apbi = mean(apbi, na.rm = TRUE)) %>%  
+            prom_spbi = mean(spbi, na.rm = TRUE)) %>%  
   ungroup()
 
-map_apbi <- mapview(elsoc_ams_all_geo, zcol = "apbr", layer.name = "Nivel de pertenencia", col.regions = mapviewPalette("mapviewRasterColors"), map.types = "CartoDB.VoyagerNoLabels")
+map_spbi <- mapview(elsoc_ams_all_geo, zcol = "apbr", layer.name = "Nivel de pertenencia", col.regions = mapviewPalette("mapviewRasterColors"), map.types = "CartoDB.VoyagerNoLabels")
 
-mapshot(map_apbi, file = "../3_output/graficos/map_apbi.png", width = 10, height = 15)
+mapshot(map_spbi, file = "../3_output/graficos/map_spbi.png", width = 10, height = 15)
 
 mapview(elsoc_ams_all_geo, zcol = "theil_segr", ap.types = "CartoDB.VoyagerNoLabels")
 
@@ -878,9 +916,9 @@ plot_jane
 ggsave(filename = "../3_output/graficos/map-jane.jpg", width = 15, height = 15, units = "cm")
 ```
 
-```{r plot-map-apbi}
-plot_apbi <- ggplot(data = elsoc_ams_all) + 
-  geom_sf(aes(fill = apbi, geometry = geometry)) +
+```{r plot-map-spbi}
+plot_spbi <- ggplot(data = elsoc_ams_all) + 
+  geom_sf(aes(fill = spbi, geometry = geometry)) +
   coord_sf(datum = st_crs(31979)) +
   scale_fill_viridis_c(direction = -1, option = "plasma") +
   theme_void() +
@@ -889,8 +927,8 @@ plot_apbi <- ggplot(data = elsoc_ams_all) +
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
   labs(fill = "Indice de\npertenencia barrial")
-plot_apbi
-ggsave(filename = "../3_output/graficos/map-apbi.jpg", width = 15, height = 15, units = "cm")
+plot_spbi
+ggsave(filename = "../3_output/graficos/map-spbi.jpg", width = 15, height = 15, units = "cm")
 ```
 
 ```{r plot-map-soci}
