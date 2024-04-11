@@ -104,7 +104,16 @@ msem_spbi <- '
 level: 1
       # Modelo estructural nivel 1
       spbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + b5*edadi + b6*educi + b7*essui + b8*time
-
+      
+      # Covarianzas
+      repbi ~~ segui
+      segui ~~ sacci
+      sacci ~~ repbi
+      desgr ~~ repbi
+      desgr ~~ sacci
+      desgr ~~ segui
+      educi ~~ essui
+      edadi ~~ time
       
 level: 2
       # Modelo estructural nivel 2
@@ -126,7 +135,6 @@ level: 2
       dens_pob ~~ sd_esco
       dens_pob ~~ viv_social
       
-
       # Efecto indirecto 
       ind_ismt_repbi_spbi := a1*b1
       ind_ismt_sacci_spbi := a2*b2
@@ -267,7 +275,7 @@ coef_plot <- coef_msem %>%
 
 coef_plot
 
-ggsave(coef_plot,filename = "../3_output/graficos/coef-nse-cob.png", width = 8, height = 8, dpi = 300)
+ggsave(coef_plot,filename = "../3_output/graficos/coef-nse-cob2.png", width = 8, height = 8, dpi = 300)
 ```
 
 ```{r msem-table-spbi-soci}
