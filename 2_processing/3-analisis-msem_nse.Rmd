@@ -14,16 +14,8 @@ options(knitr.kable.NA = '')
 ```{r load-library, include=FALSE}
 library(tidyverse) #varios
 library(sjmisc) #datos
-library(knitr)
 library(texreg) #tablas
-library(psych)
-
-library(lavaan)
-library(lavaanPlot)
-library(semPlot)
-library(foreign) 
-
-library(semTable)
+library(lavaan) #sem
 library(semptools)
 #devtools::install_github("dr-JT/semoutput") #de aquí sale sem_paths
 library(semoutput)
@@ -41,7 +33,7 @@ elsoc_sub <- elsoc_ams %>%
                 spbi, soci, 
                 segui, repbi, sacci, desgr,
                 edadi, educi, essui, time,
-                ismt_rank, sd_esco , viv_social, dens_pob) %>% 
+                ismt_rank) %>% 
   drop_na()
 
 elsoc_spbi <- elsoc_ams %>% 
@@ -49,7 +41,7 @@ elsoc_spbi <- elsoc_ams %>%
                 spbi,
                 segui, repbi, sacci, desgr,
                 edadi, educi, essui, time,
-                ismt_rank, sd_esco , viv_social, dens_pob) %>% 
+                ismt_rank) %>% 
   drop_na()
 
 elsoc_soci <- elsoc_ams %>% 
@@ -57,8 +49,11 @@ elsoc_soci <- elsoc_ams %>%
                 soci,
                 segui, repbi, sacci, desgr,
                 edadi, educi, essui, time, 
-                ismt_rank, sd_esco , viv_social, dens_pob) %>% 
+                ismt_rank) %>%  
   drop_na()
+
+#elsoc_gs_2022_complete <-  elsoc_sub %>% dplyr::select(idencuesta, cod_zona)
+#haven::write_dta(elsoc_gs_2022_complete, "../1_input/data/original/elsoc-manzanas/mzn-elsoc-2012-2017/elsoc_gs_2022_complete.dta")
 ```
 
 ```{r correlations}
@@ -79,7 +74,7 @@ elsoc_sub %>%
              ci = TRUE)          # If TRUE, adds confidence intervals
 
 elsoc_sub %>% 
-  dplyr::select(spbi, soci, ismt_rank, sd_esco, viv_social, dens_pob) %>% 
+  dplyr::select(spbi, soci, ismt_rank) %>% 
   psych::pairs.panels(smooth = TRUE,      # If TRUE, draws loess smooths
              scale = FALSE,      # If TRUE, scales the correlation text font
              density = TRUE,     # If TRUE, adds density plots and histograms
@@ -117,7 +112,7 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      spbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank + c2*sd_esco + c3*viv_social + c4*dens_pob
+      spbi ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank
       repbi ~ a1*ismt_rank
       sacci ~ a2*ismt_rank
       segui ~ a3*ismt_rank
@@ -130,10 +125,6 @@ level: 2
       desgr ~~ repbi
       desgr ~~ sacci
       desgr ~~ segui
-      ismt_rank ~~ sd_esco
-      ismt_rank ~~ viv_social
-      dens_pob ~~ sd_esco
-      dens_pob ~~ viv_social
       
       # Efecto indirecto 
       ind_ismt_repbi_spbi := a1*b1
@@ -168,7 +159,7 @@ level: 1
       
 level: 2
       # Modelo estructural nivel 2
-      soci ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank + c2*sd_esco + c3*viv_social + c4*dens_pob
+      soci ~ b1*repbi + b2*sacci + b3*segui  + b4*desgr + c1*ismt_rank
       repbi ~ a1*ismt_rank
       sacci ~ a2*ismt_rank
       segui ~ a3*ismt_rank
@@ -181,10 +172,6 @@ level: 2
       desgr ~~ repbi
       desgr ~~ sacci
       desgr ~~ segui
-      ismt_rank ~~ sd_esco
-      ismt_rank ~~ viv_social
-      dens_pob ~~ sd_esco
-      dens_pob ~~ viv_social
       
       # Efecto indirecto 
       ind_ismt_repbi_soci := a1*b1
@@ -224,39 +211,29 @@ coef_msem <- rbind(coef_spbi, coef_soci)
 
 coef_msem <- coef_msem %>% 
   mutate(term = recode(term, 
-                       "spbi ~ repbi" = "Reputación",
-                       "soci ~ repbi" = "Reputación",
-                       "spbi ~ segui" = "Seguridad",
-                       "soci ~ segui" = "Seguridad",
-                       "spbi ~ sacci" = "Satisfacción",
-                       "soci ~ sacci" = "Satisfacción",
-                       "spbi ~ desgr" = "Conflicto",
-                       "soci ~ desgr" = "Conflicto",
+                       "spbi ~ repbi" = "Reputación", "soci ~ repbi" = "Reputación",
+                       "spbi ~ segui" = "Seguridad", "soci ~ segui" = "Seguridad",
+                       "spbi ~ sacci" = "Satisfacción", "soci ~ sacci" = "Satisfacción",
+                       "spbi ~ desgr" = "Conflicto", "soci ~ desgr" = "Conflicto",
                        
-                       "spbi ~ ismt_rank" = "Nse barrio",
-                       "soci ~ ismt_rank" = "Nse barrio",
-                       "spbi ~ sd_esco" = "Mixtura",
-                       "soci ~ sd_esco" = "Mixtura",
-                       "spbi ~ viv_social" = "Vivienda social",
-                       "soci ~ viv_social" = "Vivienda social",
-                       "spbi ~ dens_pob" = "Densidad",
-                       "soci ~ dens_pob" = "Densidad",
+                       "spbi ~ ismt_rank" = "NSE barrio",  "soci ~ ismt_rank" = "NSE barrio",
+                       "spbi ~ dens_pob" = "Densidad", "soci ~ dens_pob" = "Densidad",
                        
-                       "ind_ismt_repbi_spbi := a1*b1" = "Nse barrio~\nReputación",
-                       "ind_ismt_sacci_spbi := a2*b2" = "Nse barrio~\nSatisfacción",
-                       "ind_ismt_segui_spbi := a3*b3" = "Nse barrio~\nSeguridad",
-                       "ind_ismt_desgr_spbi := a4*b4" = "Nse barrio~\nConflicto",
+                       "ind_ismt_repbi_spbi := a1*b1" = "NSE barrio~\nReputación",
+                       "ind_ismt_sacci_spbi := a2*b2" = "NSE barrio~\nSatisfacción",
+                       "ind_ismt_segui_spbi := a3*b3" = "NSE barrio~\nSeguridad",
+                       "ind_ismt_desgr_spbi := a4*b4" = "NSE barrio~\nConflicto",
 
-                       "ind_ismt_repbi_soci := a1*b1" = "Nse barrio~\nReputación",
-                       "ind_ismt_sacci_soci := a2*b2" = "Nse barrio~\nSatisfacción",
-                       "ind_ismt_segui_soci := a3*b3" = "Nse barrio~\nSeguridad",
-                       "ind_ismt_desgr_soci := a4*b4" = "Nse barrio~\nConflicto"))
+                       "ind_ismt_repbi_soci := a1*b1" = "NSE barrio~\nReputación",
+                       "ind_ismt_sacci_soci := a2*b2" = "NSE barrio~\nSatisfacción",
+                       "ind_ismt_segui_soci := a3*b3" = "NSE barrio~\nSeguridad",
+                       "ind_ismt_desgr_soci := a4*b4" = "NSE barrio~\nConflicto"))
 
 coef_plot <- coef_msem %>% 
-  ggplot(aes(x = factor(term, levels = c('Nse barrio', "Mixtura", "Densidad", "Vivienda social", 
+  ggplot(aes(x = factor(term, levels = c('NSE barrio', "Densidad", 
                                          'Reputación', 'Satisfacción', 'Seguridad', 'Conflicto',
-                                         'Nse barrio~\nReputación', 'Nse barrio~\nSatisfacción',
-                                         'Nse barrio~\nSeguridad', 'Nse barrio~\nConflicto')), 
+                                         'NSE barrio~\nReputación', 'NSE barrio~\nSatisfacción',
+                                         'NSE barrio~\nSeguridad', 'NSE barrio~\nConflicto')), 
            y = estimate)) +
   geom_hline(yintercept = 0, color = 'red') +
   geom_point(position = position_dodge(width = -0.6), size = 3) +
@@ -275,7 +252,7 @@ coef_plot <- coef_msem %>%
 
 coef_plot
 
-ggsave(coef_plot,filename = "../3_output/graficos/coef-nse-cob2.png", width = 8, height = 8, dpi = 300)
+ggsave(coef_plot,filename = "../3_output/graficos/coef-nse-cob.png", width = 8, height = 8, dpi = 300)
 ```
 
 ```{r msem-table-spbi-soci}

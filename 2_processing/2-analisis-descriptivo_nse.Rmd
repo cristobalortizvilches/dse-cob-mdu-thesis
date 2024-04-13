@@ -40,24 +40,19 @@ elsoc_long <- elsoc_long_2016_2022.2
 ```
 
 ```{r summarise-dataset, message=TRUE, warning=FALSE}
+
+q <- quantile(elsoc_mean_zonas$essui)
+
 elsoc_mean_zonas <- elsoc_ams %>% 
   group_by(cod_zona) %>% 
   dplyr::select(idencuesta, cod_zona, 
                 spbi, soci, 
                 repbi, sacci, segui, 
                 edadi, educi, essui, time, ismt_rank) %>% 
-  summarise_all(mean, na.rm = T)
-
-#q <- quantile(elsoc_mean_zonas$theil_mixt)
-#theil_mixt_f = factor(cut(theil_mixt, breaks = c(-Inf, q[2], q[3], q[4], Inf), labels = c("Q1", "Q2", "Q3", "Q4"), levels = 1:4))
-
-elsoc_mean_zonas <- elsoc_mean_zonas %>% 
-  mutate(gse_zona = factor(with(elsoc_mean_zonas, case_when(ismt_rank > 0.7325960 ~ 1,
-                                                            ismt_rank > 0.5144 ~ 2,
-                                                            ismt_rank <= 0.5144 ~ 3)),
-                           labels = c('Alto', 'Medio', 'Bajo'),
-                           levels = c(1,2,3)))
+  summarise_all(mean, na.rm = T) %>% 
+  mutate(essu = factor(cut(essui, breaks = c(-Inf, q[2], q[4], Inf), labels = c("Bajo", "Medio", "Alto"), levels = 1:3)))
 ```
+
 # Descriptivo general
 
 ```{r desc-table}
@@ -406,44 +401,46 @@ ggsave(cor_plot,filename = "../3_output/graficos/cor_plot_nse.png", width = 8, h
 
 ```
 
-
 ## H1: nse->cohesión
 
 ```{r, message=FALSE, warning=FALSE}
 scat_spbi_nse <- elsoc_mean_zonas %>% 
-  ggplot(aes(x = ismt_rank, y = spbi, color = theil_mixt_f)) +
+  ggplot(aes(x = ismt_rank, y = spbi, color = essu)) +
   geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 0.8) +
   #geom_smooth(se = F, size = 1.5) +
   geom_smooth(aes(x = ismt_rank, y = spbi), 
               method = "lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
-  labs(x = "Nse barrio", 
+  labs(x = "NSE barrio", 
        y = "Pertenencia",
-       color = "Mixtura") +
+       color = "NSE individual") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
         axis.title = element_text(size = 10, face = "bold")) +
-  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1) +
+  guides(color = guide_legend(reverse = TRUE))
 
 scat_soci_nse <- elsoc_mean_zonas %>% 
-  ggplot(aes(x = ismt_rank, y = soci, color = theil_mixt_f)) +
+  drop_na() %>% 
+  ggplot(aes(x = ismt_rank, y = soci, color = essu)) +
   geom_point(size = 0.8) +
   geom_smooth(method = "lm", se = F, size = 0.8) +
   #geom_smooth(se = F, size = 1.5) +
   geom_smooth(aes(x = ismt_rank, y = soci), 
               method="lm", se = F, inherit.aes = F, colour = "black", size = 1, linetype = "twodash") +
-  labs(x = "Nse barrio", 
+  labs(x = "NSE barrio", 
        y = "Sociabilidad",
-       color = "Mixtura") +
+       color = "NSE individual") +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
         axis.title = element_text(size = 10, face = "bold")) +
-  scale_color_viridis(discrete = TRUE, option = "D", direction = -1)
+  scale_color_viridis(discrete = TRUE, option = "D", direction = -1) +
+  guides(color = guide_legend(reverse = TRUE))
 
 scatter_nse_cob <- ggarrange(scat_spbi_nse, scat_soci_nse, ncol = 2, common.legend = TRUE, legend="top")
-#ggsave(scatter_nse_cob,filename = "../3_output/graficos/scat-nse-cob.png", width = 10, height = 4)
+ggsave(scatter_nse_cob,filename = "../3_output/graficos/scat-nse-cob.png", width = 10, height = 4)
 scatter_nse_cob
 ```
 
