@@ -29,42 +29,36 @@ remove(list = ls())
 
 #load datasets
 load(url("https://dataverse.harvard.edu/api/access/datafile/7245115")) #elsoc wide 2016-2022
-manzanas_2017_elsoc <- haven::read_dta("../1_input/data/original/elsoc-manzanas/mzn-elsoc-2012-2017/manzanas2017_elsoc_2016_2019.dta")
-ismt_data <- read.csv("../1_input/data/original/ocuc-ismt/ismt_rm_2017.csv") #ismt calculado por OCUC
+manzanas_2017_elsoc <- haven::read_dta("../1_input/data/original/elsoc-manzanas/mzn-elsoc-2012-2017/manzanas2017_elsoc_2016_2019.dta") %>%
+  dplyr::select(idencuesta, cod_zona = geocodigo_ok)
+ismt_data <- read.csv("../1_input/data/original/ocuc-ismt/ismt_rm_2017.csv") %>% #ismt calculado por OCUC
+  dplyr::select(cod_zona = zona, ismt_rank = ismtpn) #selección y renombre de variables
 ```
 
-```{r merge-datasets}
-# I. Selección previa de variables
-
-## ZONAS ELSOC
-id_territorio <- manzanas_2017_elsoc %>% select(idencuesta, cod_zona = geocodigo_ok)
-
-## ISMT
-ismt_rm <- ismt_data %>% dplyr::select(cod_zona = zona, ismt_rank = ismtpn) #selección y renombre de variables
-
-# II. Unión de base de datos
+```{r join-datasets}
 
 ## JOIN: ELSOC & ZONAS
-id_territorio$idencuesta <- as.numeric(id_territorio$idencuesta) #cambio clase para hacer el siguiente join
-elsoc_a <- dplyr::left_join(x = elsoc_wide_2016_2022.2, y = id_territorio, by = "idencuesta")
+manzanas_2017_elsoc$idencuesta <- as.numeric(manzanas_2017_elsoc$idencuesta) #cambio clase para hacer el siguiente join
+elsoc_a <- dplyr::left_join(x = elsoc_wide_2016_2022.2, y = manzanas_2017_elsoc, by = "idencuesta")
 
 ## JOIN: ELSOC-ZONAS & ISMT
 elsoc_a$cod_zona <- as.numeric(elsoc_a$cod_zona) #cambio clase para hacer el siguiente join
-elsoc_b <- dplyr::left_join(x = elsoc_a, y = ismt_rm, by = "cod_zona")
+elsoc_b <- dplyr::left_join(x = elsoc_a, y = ismt_data, by = "cod_zona")
 ```
 
 ```{r clean-dataset}
 elsoc_ams <- elsoc_b %>% 
   dplyr::select(idencuesta, #id individual
                 estrato_disenno, estrato_w06, comuna_w06, comuna_cod_w06, cod_zona, #id geográficos
-                t02_01_w06, t02_02_w06, t02_03_w06, t02_04_w06, #pertenencia barrial 
-                t03_01_w06, t03_02_w06, t03_03_w06, t03_04_w06, #sociabilidad barrial
-                t06_02_w06, t06_05_w06, t06_06_w06, t06_07_w06, #satisfacción barrial
-                t08_w06, t10_w06, t04_06_w04, # reputación | seguridad | conflicto barrial 
+                starts_with("t02_"), #pertenencia barrial 
+                starts_with("t03_"), #sociabilidad barrial
+                starts_with("t06_02") ,starts_with("t06_05"), starts_with("t06_06"), starts_with("t06_07"),  #satisfacción barrial
+                starts_with("t08_"), starts_with("t10_"), starts_with("t04_06_"), # reputación | seguridad | conflicto barrial 
                 ismt_rank, #desigualdad socioespacial
                 m0_sexo_w06, m0_edad_w06, #sexo | edad
-                m01_w06, d01_01_w06, m29_w06, m14_w06, # escolaridad | estatus subjetivo | 
-                m34_03_w03) %>% # tiempo de residencia
+                starts_with("m01_"), starts_with("d01_01_"), # escolaridad | estatus subjetivo 
+                starts_with("m29_"), #ingreso familiar monto
+                starts_with("m34_03_")) %>% # tiempo de residencia
   filter(estrato_w06 == 1 &  #solo Gran Santiago en la medición 2022
          comuna_cod_w06 < 13605 & # excluye comunas rurales del RM
          comuna_cod_w06 > 11000 & # excluye comunas fuera de la RM
@@ -73,64 +67,77 @@ elsoc_ams <- elsoc_b %>%
 #convertimos no sabe/no responde/no disponible/sin dato/no aplica a NA
 elsoc_ams[elsoc_ams == -888 | elsoc_ams == -999 | elsoc_ams == 994 | elsoc_ams == 995 | elsoc_ams == 996 | elsoc_ams == -666 | elsoc_ams == -777] <- NA # varias categoría a NA
 
+#view(dfSummary(elsoc_ams, plain.ascii  = FALSE, style = "grid", graph.magnif = 0.75, valid.col = FALSE))
+
 #IMPORTANTE LEER: luego de esta limpieza de datos, se concluye que los códigos de zonas y comunas de ELSOC, difieren en aprox 35 casos respecto a las zonas y comunas de la data que contiene las manzanas reales. Ante la imposibilidad de verificar cuál código es el adecuado, optamos por guiarnos por los códigos de ELSOC (y especificamente la ola 2022). Es decir, la base de datos final contiene aquellos que cumples dos condiciones: en la medición original (2026) vivían en el Gran Santiago; ii) en la última medición (2022) siguen viviendo en el Gran Santiago.
 ```
- 
-```{r pca-sacci-nsei}
 
-elsoc_nse <- elsoc_b %>% 
-  dplyr::select(idencuesta, #id individual
-                estrato_w06, comuna_cod_w06,
-                m01_w06, # escolaridad
-                d01_01_w06, # estatus subjetivo
-                m29_w01, m29_w02, m29_w03, m29_w04, m29_w05, m29_w06) %>% #ingreso total hogar (monto)
-  filter(estrato_w06 == 1 &  #solo Gran Santiago en la medición 2022
-         comuna_cod_w06 < 13605 & # excluye comunas rurales del RM
-         comuna_cod_w06 > 11000 & # excluye comunas fuera de la RM
-         !comuna_cod_w06 %in% c(13602, 13603))
-  
-elsoc_nse[elsoc_nse == -888 | elsoc_nse == -999 | elsoc_nse == 994 | elsoc_nse == 995 | elsoc_nse == 996 | elsoc_nse == -666 | elsoc_nse == -777] <- NA # varias categoría a NA
-
-elsoc_nse  <- elsoc_nse %>% 
-  mutate(ingr_impu = coalesce(m29_w06, m29_w05, m29_w04, m29_w03, m29_w02, m29_w01),
-         ingr_prom = rowMeans(dplyr::select(., starts_with("m29_")), na.rm = TRUE))
-
-view(dfSummary(elsoc_nse, plain.ascii  = FALSE, style = "grid", graph.magnif = 0.75, valid.col = FALSE))
-View(elsoc_nse)
-
+```{r imput-intertemporal}
+elsoc_ams  <- elsoc_ams %>%
+  mutate(across(starts_with("m29_"), ~if_else(. %in% 0, NA_real_, .))) %>% #convierto ingreso = 0 a NA
+  mutate(#INGRESO FAMILIAR
+         ingr_prom = rowSums(select(., starts_with("m29_")), na.rm = TRUE) / rowSums(!is.na(select(., starts_with("m29_")))),
+         #BATERÍA DE PERTENENCIA BARRIAL
+         t02_01 = coalesce(t02_01_w06, t02_01_w04, t02_01_w03, t02_01_w02, t02_01_w01), 
+         t02_02 = coalesce(t02_02_w06, t02_02_w04, t02_02_w03, t02_02_w02, t02_02_w01),
+         t02_03 = coalesce(t02_03_w06, t02_03_w04, t02_03_w03, t02_03_w02, t02_03_w01),
+         t02_04 = coalesce(t02_04_w06, t02_04_w04, t02_04_w03, t02_04_w02, t02_04_w01),
+         #BATERÍA DE SOCIABILIDAD BARRIAL
+         t03_01 = coalesce(t03_01_w06, t03_01_w04, t03_01_w03, t03_01_w02, t03_01_w01), 
+         t03_02 = coalesce(t03_02_w06, t03_02_w04, t03_02_w03, t03_02_w02, t03_02_w01),
+         t03_03 = coalesce(t03_03_w06, t03_03_w04, t03_03_w03, t03_03_w02, t03_03_w01),
+         t03_04 = coalesce(t03_04_w06, t03_04_w04, t03_04_w03, t03_04_w02, t03_04_w01),
+         #BATERÍA DE SATISFACCIÓN BARRIAL
+         t06_02 = coalesce(t06_02_w06, t06_02_w04, t06_02_w03, t06_02_w02, t06_02_w01),
+         t06_05 = coalesce(t06_05_w06, t06_05_w04, t06_05_w03, t06_05_w02, t06_05_w01),
+         t06_06 = coalesce(t06_06_w06, t06_06_w04, t06_06_w03, t06_06_w02, t06_06_w01),
+         t06_07 = coalesce(t06_07_w06, t06_07_w04, t06_07_w03, t06_07_w02, t06_07_w01),
+         #REPUTACIÓN BARRIAL,
+         t08 = coalesce(t08_w06, t08_w05, t08_w04, t08_w03, t08_w02, t08_w01),
+         #SEGURIDAD BARRIAL
+         t10 = coalesce(t10_w06, t10_w05, t10_w04, t10_w03, t10_w02, t10_w01),
+         #CONFLICTO INTERGRUPAL,
+         t04_06 = coalesce(t04_06_w04, t04_06_w03, t04_06_w02, t04_06_w01),
+         #EDUCACIÓN
+         m01 = coalesce(m01_w06, m01_w05, m01_w04, m01_w03, m01_w02, m01_w01),
+         #ESTATUS SUBJETIVO
+         d01_01 = coalesce(d01_01_w06, d01_01_w05, d01_01_w04, d01_01_w03, d01_01_w02, d01_01_w01),
+         #TIEMPO DE RESIDENCIA
+         m34_03 = coalesce(m34_03_w03, m34_03_w01))
+         
 ```
 
 ```{r manipulate-variables}
 elsoc_ams <- elsoc_ams %>% 
   #remove_all_labels() %>%
   #-----Recode Y: cohesión barrial
-  mutate(spbi = rowMeans(dplyr::select(., starts_with("t02_")), na.rm = TRUE), #promedio apego al barrio
-         soci = rowMeans(dplyr::select(., starts_with("t03_")), na.rm = TRUE)) %>%  #promedio sociabilidad barrial
+  mutate(spbi = rowMeans(dplyr::select(., t02_01, t02_02, t02_03, t02_04), na.rm = TRUE), #promedio apego al barrio
+         soci = rowMeans(dplyr::select(., t03_01, t03_02, t03_03, t03_04), na.rm = TRUE)) %>%  #promedio sociabilidad barrial
   mutate(spbf = factor(cut(spbi, breaks = c(1, 3, 4, 5), 
                            labels = c("Baja", "Media", "Alta"), levels = 1:3)),
          socf = factor(cut(soci, breaks = c(1, 3, 4, 5), 
                            labels = c("Baja", "Media", "Alta"), levels = 1:3)),
   #-----Recode M: mecanismos subjetivos 
-         segu = factor(car::recode(t10_w06, "1:2=1;3=2;4:5=3"),
+         segu = factor(car::recode(t10, "1:2=1;3=2;4:5=3"),
                        labels = c("Baja",  "Media", "Alta"), levels = 1:3),
-         segui = t10_w06,
-         sacci = rowMeans(dplyr::select(., t06_02_w06, t06_05_w06, t06_06_w06, t06_07_w06), na.rm = TRUE),
-         repb = factor(car::recode(t08_w06, "1:2=1;3=2;4:5=3"),
+         segui = t10,
+         sacci = rowMeans(dplyr::select(., t06_02, t06_05, t06_06, t06_07), na.rm = TRUE),
+         repb = factor(car::recode(t08, "1:2=1;3=2;4:5=3"),
                        labels = c("Negativa", "Neutra", "Positiva"), levels = 1:3),
-         repbi = t08_w06,
-         desgr = t04_06_w04, 
-         desea = ((t04_06_w04 - max(t04_06_w04, na.rm = T)) * -1) + min(t04_06_w04, na.rm = T)) %>% 
+         repbi = t08,
+         desgr = t04_06, 
+         desea = ((t04_06 - max(t04_06_w04, na.rm = T)) * -1) + min(t04_06, na.rm = T)) %>% 
   #-----Recode C: controles sociodemográficos
   mutate(edad = factor(car::recode(m0_edad_w06, "18:29=1; 30:49=2; 50:64=3; 65:150=4"),
                        labels = c('18-29', '30-49', '50-64', '65 o más'), levels = 1:4),
          edadi = m0_edad_w06,
-         educ = factor(car::recode(m01_w06,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
+         educ = factor(car::recode(m01,"1:3=1; 4:5=2; 6:7=3; 8:10=4"),
                        labels = c("Básica", "Media", "Técnica", "Universitaria"), levels = 1:4),
-         educi = m01_w06,
-         essu = factor(car::recode(d01_01_w06, "c(6,7,8,9,10)=1; c(4,5)=2; c(0,1,2,3)=3"),
+         educi = m01,
+         essu = factor(car::recode(d01_01, "c(6,7,8,9,10)=1; c(4,5)=2; c(0,1,2,3)=3"),
                       labels = c("Alto", "Medio", "Bajo"), levels = 1:3),
-         essui = d01_01_w06,
-         time = m34_03_w03) %>% 
+         essui = d01_01,
+         time = m34_03) %>% 
   #-----Etiqueta variables
   var_labels(spbi = "Pertenencia barrial",
              spbf = "Pertenencia barrial",
@@ -151,9 +158,11 @@ elsoc_ams <- elsoc_ams %>%
              time = 'Tiempo de residencia',
              ismt_rank = "NSE barrio")
 
-elsoc_ams <- elsoc_ams %>% 
-  #-----Estandarización de variables
-  mutate_at(vars(spbi, soci, segui, repbi, desgr, essui, edadi, educi, time, ismt_rank), scale)
+## Estandarización de variables
+#elsoc_ams <- elsoc_ams %>% mutate_at(vars(spbi, soci, segui, repbi, desgr, essui, edadi, educi, time, ismt_rank), scale)
+
+view(dfSummary(elsoc_ams, plain.ascii  = FALSE, style = "grid", graph.magnif = 0.75, valid.col = FALSE))
+
 ```
 
 ```{r join-geometrías}
@@ -178,7 +187,6 @@ ggplot(data = elsoc_ams_all) + geom_sf(aes(fill = ismt_rank, geometry = geometry
 elsoc_ams_all_geo <- st_as_sf(x = elsoc_ams_all, sf_column_name = "geometry") %>% st_transform(31979)
 
 ```
-
 
 ```{r save-dataset, warning=FALSE}
 # df para msem 

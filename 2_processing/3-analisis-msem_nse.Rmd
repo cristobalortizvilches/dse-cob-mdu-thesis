@@ -24,11 +24,12 @@ library(semoutput)
 ```{r load-dataset-proc, include=FALSE}
 getwd()
 rm(list=ls())
-load("../1_input/data/procesada/elsoc_ams.RData")
-#load("../3_output/modelos/sem_models.RData")
-#View(elsoc_sub)
 
-elsoc_sub <- elsoc_ams %>% 
+load("../1_input/data/procesada/elsoc_ams.RData")
+nse_data0 <- read.csv("../1_input/data/original/dterr-w01-w04/ismt_rank.csv") #NSE calculado con PCA por QRamond
+#load("../3_output/modelos/sem_models.RData")
+
+elsoc_sub0 <- elsoc_ams %>% 
   dplyr::select(idencuesta, cod_zona, 
                 spbi, soci, 
                 segui, repbi, sacci, desgr,
@@ -36,24 +37,21 @@ elsoc_sub <- elsoc_ams %>%
                 ismt_rank) %>% 
   drop_na()
 
-elsoc_spbi <- elsoc_ams %>% 
-  dplyr::select(idencuesta, cod_zona, 
-                spbi,
-                segui, repbi, sacci, desgr,
-                edadi, educi, essui, time,
-                ismt_rank) %>% 
+################################################
+elsoc_ams_complete <- elsoc_ams %>% 
+  dplyr::select(idencuesta, cod_zona) %>% 
   drop_na()
+haven::write_dta(elsoc_ams_complete, "../1_input/data/procesada/elsoc_ams_complete.dta")
+################################################
 
-elsoc_soci <- elsoc_ams %>% 
-  dplyr::select(idencuesta, cod_zona, 
-                soci,
-                segui, repbi, sacci, desgr,
-                edadi, educi, essui, time, 
-                ismt_rank) %>%  
-  drop_na()
+#view(dfSummary(elsoc_sub0, plain.ascii  = FALSE, style = "grid", graph.magnif = 0.75, valid.col = FALSE))
 
-#elsoc_gs_2022_complete <-  elsoc_sub %>% dplyr::select(idencuesta, cod_zona)
-#haven::write_dta(elsoc_gs_2022_complete, "../1_input/data/original/elsoc-manzanas/mzn-elsoc-2012-2017/elsoc_gs_2022_complete.dta")
+#nse_data <- nse_data0 %>% dplyr::select(idencuesta, ismt_rank)
+
+#elsoc_sub <- dplyr::left_join(x = elsoc_sub0, y = nse_data, by = "idencuesta")
+
+# Estandarización de variables
+elsoc_sub <- elsoc_sub0 %>% mutate_at(vars(spbi, soci, segui, repbi, desgr, essui, edadi, educi, time, ismt_rank), scale)
 ```
 
 ```{r correlations}
@@ -139,7 +137,7 @@ level: 2
       tot_ismt_desgr_spbi := c1 + (a4*b4)
 '
 
-fit_msem_spbi <- sem(msem_spbi, data = elsoc_spbi, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
+fit_msem_spbi <- sem(msem_spbi, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
 #summary(fit_msem_spbi, fit.measures = TRUE, standardized = TRUE)
 
 msem_soci <- '
@@ -186,7 +184,7 @@ level: 2
       tot_ismt_desgr_soci := c1 + (a4*b4)
 '
 
-fit_msem_soci <- sem(msem_soci, data = elsoc_soci, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
+fit_msem_soci <- sem(msem_soci, data = elsoc_sub, cluster = "cod_zona", verbose = TRUE, optim.method = "em")
 #summary(fit_msem_soci, fit.measures = TRUE, standardized = TRUE)
 ```
 
@@ -252,7 +250,7 @@ coef_plot <- coef_msem %>%
 
 coef_plot
 
-ggsave(coef_plot,filename = "../3_output/graficos/coef-nse-cob.png", width = 8, height = 8, dpi = 300)
+ggsave(coef_plot,filename = "../3_output/graficos/coef-nse-cob-iter.png", width = 8, height = 8, dpi = 300)
 ```
 
 ```{r msem-table-spbi-soci}
